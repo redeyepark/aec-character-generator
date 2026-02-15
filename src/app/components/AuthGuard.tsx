@@ -13,7 +13,7 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { user, loading } = useAuth();
+  const { user, loading, authError } = useAuth();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -31,6 +31,34 @@ export default function AuthGuard({ children }: AuthGuardProps) {
             aria-hidden="true"
           />
           <span className="text-sm text-gray-500">로딩 중...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 인증 오류 발생 시 에러 메시지와 재시도 버튼 표시
+  if (authError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-full max-w-md mx-4">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+            <h2 className="text-lg font-semibold text-red-700 mb-2">
+              인증 오류
+            </h2>
+            <p className="text-sm text-red-600 mb-4">
+              {authError}
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="inline-block px-6 py-2.5 rounded-lg text-sm font-semibold
+                         bg-red-600 text-white hover:bg-red-700 active:bg-red-800
+                         transition-colors duration-150
+                         focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+            >
+              다시 시도
+            </button>
+          </div>
         </div>
       </div>
     );

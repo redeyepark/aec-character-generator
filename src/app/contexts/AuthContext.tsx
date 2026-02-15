@@ -24,6 +24,8 @@ export interface AuthContextType {
   loading: boolean;
   /** 캐릭터 보유 여부 */
   hasCharacter: boolean;
+  /** 인증 오류 메시지 */
+  authError: string | null;
   /** 회원가입 */
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   /** 로그인 */
@@ -45,6 +47,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasCharacter, setHasCharacter] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // 사용자의 캐릭터 보유 여부 확인
   const checkHasCharacter = useCallback(async (userId: string) => {
@@ -78,19 +81,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // 인증 상태 변화 구독
   useEffect(() => {
-    // 초기 세션 가져오기
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log("[AuthContext] 초기 세션 로드", {
-        hasSession: !!currentSession,
-        userId: currentSession?.user?.id,
+    // 초기 세션 가져오기 - 에러 처리 및 타임아웃 안전장치 추가
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    supabase.auth.getSession()
+      .then(({ data: { session: currentSession } }) => {
+        console.log("[AuthContext] 초기 세션 로드", {
+          hasSession: !!currentSession,
+          userId: currentSession?.user?.id,
+        });
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        setAuthError(null);
+        if (currentSession?.user) {
+          checkHasCharacter(currentSession.user.id);
+        }
+      })
+      .catch((error) => {
+        // Supabase 연결 실패 시 에러 상태 설정
+        console.error("[AuthContext] 초기 세션 로드 오류", error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "인증 서비스에 연결할 수 없습니다. 네트워크를 확인하세요.";
+        setAuthError(errorMessage);
+        setSession(null);
+        setUser(null);
+      })
+      .finally(() => {
+        // 항상 로딩 상태를 종료하도록 보장
+        setLoading(false);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       });
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      if (currentSession?.user) {
-        checkHasCharacter(currentSession.user.id);
-      }
+
+    // 10초 타임아웃 안전장치 - 프로미스가 응답하지 않으면 강제로 로딩 종료
+    timeoutId = setTimeout(() => {
+      console.warn("[AuthContext] 초기 세션 로드 타임아웃");
       setLoading(false);
-    });
+      setAuthError("인증 서비스 응답 시간이 초과되었습니다.");
+    }, 10000);
 
     // 인증 상태 변경 리스너
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -102,6 +133,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        setAuthError(null);
         if (newSession?.user) {
           checkHasCharacter(newSession.user.id);
         } else {
@@ -111,6 +143,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
 
     return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       subscription.unsubscribe();
     };
   }, [checkHasCharacter]);
@@ -177,6 +212,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         session,
         loading,
         hasCharacter,
+        authError,
         signUp,
         signIn,
         signOut,

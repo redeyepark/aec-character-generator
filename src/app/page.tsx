@@ -46,7 +46,7 @@ const FEATURE_CARDS = [
 ] as const;
 
 export default function Home() {
-  const { user, loading, hasCharacter, refreshHasCharacter } = useAuth();
+  const { user, loading, hasCharacter, refreshHasCharacter, authError } = useAuth();
   const [characterChecked, setCharacterChecked] = useState(false);
 
   // 로그인 상태 확인 후 캐릭터 보유 여부를 확실히 확인한다.
@@ -69,7 +69,8 @@ export default function Home() {
   }, [characterChecked, user, hasCharacter]);
 
   // 로딩 중이거나 로그인된 사용자 (리다이렉트 대기)
-  if (loading || user) {
+  // 인증 오류가 발생한 경우 비로그인 상태와 동일하게 랜딩 페이지를 표시한다.
+  if (loading || (user && !authError)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
