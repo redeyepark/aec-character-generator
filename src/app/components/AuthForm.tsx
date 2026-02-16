@@ -11,7 +11,7 @@ import { useAuth } from "@/app/hooks/useAuth";
 type AuthTab = "login" | "signup";
 
 export default function AuthForm() {
-  const { signIn, signUp, hasCharacter } = useAuth();
+  const { signIn, signUp } = useAuth();
 
   const [activeTab, setActiveTab] = useState<AuthTab>("login");
   const [email, setEmail] = useState("");
@@ -45,8 +45,8 @@ export default function AuthForm() {
           setError(result.error);
           setIsSubmitting(false);
         } else {
-          // 로그인 성공: 캐릭터 유무에 따라 리다이렉트
-          window.location.href = hasCharacter ? "/mood/" : "/create/";
+          // 로그인 성공: 루트 페이지에서 캐릭터 확인 후 적절한 경로로 리다이렉트
+          window.location.href = "/";
         }
       } else {
         const result = await signUp(email, password);
@@ -59,7 +59,7 @@ export default function AuthForm() {
         }
       }
     },
-    [activeTab, email, password, isFormValid, isSubmitting, signIn, signUp, hasCharacter]
+    [activeTab, email, password, isFormValid, isSubmitting, signIn, signUp]
   );
 
   return (

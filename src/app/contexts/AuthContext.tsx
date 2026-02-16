@@ -108,16 +108,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setAuthError(null);
 
         if (firebaseUser) {
-          checkHasCharacter(firebaseUser.uid);
+          // 캐릭터 확인 완료 후 로딩 종료 (race condition 방지)
+          checkHasCharacter(firebaseUser.uid).then(() => {
+            setLoading(false);
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
+          });
         } else {
           setHasCharacter(false);
-        }
-
-        setLoading(false);
-
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
+          setLoading(false);
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
         }
       },
       (error) => {
