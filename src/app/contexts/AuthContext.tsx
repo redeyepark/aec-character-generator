@@ -23,12 +23,14 @@ import {
 import {
   doc,
   setDoc,
+  getDoc,
   collection,
   query,
   where,
   getDocs,
   serverTimestamp,
 } from "firebase/firestore";
+import type { FirestoreProfile } from "@/app/lib/firestore.types";
 import { auth, db } from "@/app/lib/firebase";
 
 export interface AuthContextType {
@@ -38,6 +40,8 @@ export interface AuthContextType {
   loading: boolean;
   /** 캐릭터 보유 여부 */
   hasCharacter: boolean;
+  /** 관리자 여부 */
+  isAdmin: boolean;
   /** 인증 오류 메시지 */
   authError: string | null;
   /** 회원가입 */
@@ -65,7 +69,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasCharacter, setHasCharacter] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // 사용자의 관리자 역할 확인 (profiles/{uid} 문서에서 role 필드 조회)
+  const checkIsAdmin = useCallback(async (userId: string) => {
+    try {
+      const profileRef = doc(db, "profiles", userId);
+      const profileSnap = await getDoc(profileRef);
+      if (profileSnap.exists()) {
+        const data = profileSnap.data() as FirestoreProfile;
+        setIsAdmin(data.role === "admin");
+      } else {
+        // 프로필 문서가 없으면 일반 사용자로 처리
+        setIsAdmin(false);
+      }
+    } catch (err) {
+      console.error("[관리자 확인 예외]", err);
+      setIsAdmin(false);
+    }
+  }, []);
 
   // 사용자의 캐릭터 보유 여부 확인
   const checkHasCharacter = useCallback(async (userId: string) => {
@@ -114,8 +137,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setAuthError(null);
 
         if (firebaseUser) {
-          // 캐릭터 확인 완료 후 로딩 종료 (race condition 방지)
-          checkHasCharacter(firebaseUser.uid).then(() => {
+          // 캐릭터 확인 + 관리자 확인을 병렬 실행 후 로딩 종료 (race condition 방지)
+          Promise.all([
+            checkHasCharacter(firebaseUser.uid),
+            checkIsAdmin(firebaseUser.uid),
+          ]).then(() => {
             setLoading(false);
             if (timeoutId) {
               clearTimeout(timeoutId);
@@ -124,6 +150,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         } else {
           setHasCharacter(false);
+          setIsAdmin(false);
           setLoading(false);
           if (timeoutId) {
             clearTimeout(timeoutId);
@@ -154,7 +181,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       unsubscribe();
     };
-  }, [checkHasCharacter]);
+  }, [checkHasCharacter, checkIsAdmin]);
 
   // 회원가입
   const signUp = useCallback(
@@ -247,6 +274,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await firebaseSignOut(auth);
     setUser(null);
     setHasCharacter(false);
+    setIsAdmin(false);
   }, []);
 
   return (
@@ -255,6 +283,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user,
         loading,
         hasCharacter,
+        isAdmin,
         authError,
         signUp,
         signIn,

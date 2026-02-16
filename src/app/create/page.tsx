@@ -11,6 +11,7 @@ import WizardStep from "@/app/components/WizardStep";
 import AssetPicker from "@/app/components/AssetPicker";
 import CharacterCanvas from "@/app/components/CharacterCanvas";
 import { useCharacter } from "@/app/hooks/useCharacter";
+import { useAuth } from "@/app/hooks/useAuth";
 import {
   getFaceSvgAssets,
   getHairAssets,
@@ -31,7 +32,8 @@ const WIZARD_STEPS = [
 ];
 
 function CreatePageContent() {
-  const { loading: charLoading, fetchCharacter, createCharacter } = useCharacter();
+  const { isAdmin } = useAuth();
+  const { character, loading: charLoading, fetchCharacter, createCharacter, updateCharacter } = useCharacter();
 
   // 위자드 상태
   const [wizard, setWizard] = useState<WizardState>({
@@ -49,11 +51,25 @@ function CreatePageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // 초기 로드: 기존 캐릭터가 있으면 무드 페이지로 리다이렉트
+  // 관리자 편집 모드: 관리자이면서 기존 캐릭터가 있는 경우
+  const isEditMode = isAdmin && character !== null;
+
+  // 초기 로드: 기존 캐릭터가 있으면 무드 페이지로 리다이렉트 (관리자 제외)
   useEffect(() => {
     fetchCharacter().then((existing) => {
-      if (existing) {
+      if (existing && !isAdmin) {
+        // 일반 사용자: 이미 캐릭터가 있으면 무드 페이지로 이동
         window.location.href = "/mood/";
+      } else if (existing && isAdmin) {
+        // 관리자: 기존 캐릭터 데이터를 위자드 상태에 로드 (편집 모드)
+        setWizard({
+          step: 1,
+          face: existing.face,
+          hair: existing.hair,
+          mustache: existing.mustache,
+          glasses: existing.glasses,
+          skinTone: (existing.skinTone as SkinTone) ?? DEFAULT_SKIN_TONE,
+        });
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,7 +139,7 @@ function CreatePageContent() {
     setWizard((prev) => ({ ...prev, step }));
   }, []);
 
-  // 저장 핸들러
+  // 저장 핸들러 (편집 모드: updateCharacter, 생성 모드: createCharacter)
   const handleSave = useCallback(async () => {
     if (!wizard.face || !wizard.hair) return;
 
@@ -139,7 +155,14 @@ function CreatePageContent() {
         skinTone: wizard.skinTone,
       };
 
-      const result = await createCharacter(data);
+      let result;
+      if (isEditMode && character) {
+        // 관리자 편집 모드: 기존 캐릭터 수정
+        result = await updateCharacter(character.id, data);
+      } else {
+        // 신규 생성 모드
+        result = await createCharacter(data);
+      }
 
       // 저장 실패 시 에러 메시지 표시
       if (!result) {
@@ -156,7 +179,7 @@ function CreatePageContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [wizard, createCharacter]);
+  }, [wizard, createCharacter, updateCharacter, isEditMode, character]);
 
   // 로딩 중
   if (charLoading) {
@@ -178,11 +201,18 @@ function CreatePageContent() {
       {/* 헤더 */}
       <header className="text-center mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-          캐릭터 생성
+          {isEditMode ? "캐릭터 수정" : "캐릭터 생성"}
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          나만의 베이스 캐릭터를 만들어보세요
+          {isEditMode
+            ? "캐릭터의 외형을 수정할 수 있습니다"
+            : "나만의 베이스 캐릭터를 만들어보세요"}
         </p>
+        {isEditMode && (
+          <span className="inline-block mt-2 px-3 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
+            관리자 편집 모드
+          </span>
+        )}
       </header>
 
       {/* 메인 콘텐츠: 2열 (데스크톱) / 1열 (모바일) */}

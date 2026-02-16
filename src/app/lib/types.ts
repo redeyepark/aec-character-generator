@@ -159,6 +159,7 @@ export interface Profile {
   id: string;
   user_id: string;
   display_name: string | null;
+  role?: string; // 사용자 역할 (예: 'admin', 'user'). 없으면 기본 'user'
   created_at: string;
 }
 

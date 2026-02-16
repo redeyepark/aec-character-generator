@@ -4,6 +4,7 @@ import type { Timestamp } from "firebase/firestore";
 export interface FirestoreProfile {
   userId: string;
   displayName: string | null;
+  role?: string; // 사용자 역할 (예: 'admin', 'user'). 없으면 기본 'user'
   createdAt: Timestamp;
 }
 
