@@ -2,12 +2,47 @@
 
 /**
  * 무드 다이어리 항목 CRUD 훅
- * Supabase mood_entries 테이블에 대한 조회/생성/수정 기능을 제공한다.
+ * Firestore mood_entries 컬렉션에 대한 조회/생성/수정 기능을 제공한다.
  */
 import { useState, useCallback } from "react";
-import { supabase } from "@/app/lib/supabase";
-import type { MoodEntry } from "@/app/lib/types";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  addDoc,
+  updateDoc,
+  doc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "@/app/lib/firebase";
+import type { MoodEntry, MoodCategory } from "@/app/lib/types";
+import type { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { useAuth } from "./useAuth";
+
+/**
+ * Firestore 문서를 MoodEntry 도메인 타입으로 변환
+ */
+function toMoodEntry(
+  docSnap: QueryDocumentSnapshot<DocumentData>
+): MoodEntry {
+  const data = docSnap.data();
+  return {
+    id: docSnap.id,
+    user_id: data.userId,
+    character_id: data.characterId,
+    date: data.date,
+    mood_category: data.moodCategory,
+    outfit_file: data.outfitFile,
+    expression_file: data.expressionFile,
+    composite_image_url: data.compositeImageUrl ?? null,
+    created_at:
+      data.createdAt?.toDate().toISOString() ?? new Date().toISOString(),
+    updated_at:
+      data.updatedAt?.toDate().toISOString() ?? new Date().toISOString(),
+  };
+}
 
 interface UseMoodEntriesReturn {
   /** 로딩 상태 */
@@ -22,7 +57,7 @@ interface UseMoodEntriesReturn {
   upsertEntry: (data: {
     characterId: string;
     date: string;
-    moodCategory: string;
+    moodCategory: MoodCategory;
     outfitFile: string;
     expressionFile: string;
   }) => Promise<MoodEntry | null>;
@@ -53,19 +88,18 @@ export function useMoodEntries(): UseMoodEntriesReturn {
 
     try {
       const today = getTodayDateString();
-      const { data, error: fetchError } = await supabase
-        .from("mood_entries")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("date", today)
-        .maybeSingle();
+      const q = query(
+        collection(db, "mood_entries"),
+        where("userId", "==", user.uid),
+        where("date", "==", today)
+      );
+      const snapshot = await getDocs(q);
 
-      if (fetchError) {
-        setError(fetchError.message);
+      if (snapshot.empty) {
         return null;
       }
 
-      return (data as MoodEntry) ?? null;
+      return toMoodEntry(snapshot.docs[0]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "무드 항목 조회 실패";
       setError(msg);
@@ -89,20 +123,16 @@ export function useMoodEntries(): UseMoodEntriesReturn {
         const lastDay = new Date(year, month, 0).getDate();
         const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
-        const { data, error: fetchError } = await supabase
-          .from("mood_entries")
-          .select("*")
-          .eq("user_id", user.id)
-          .gte("date", startDate)
-          .lte("date", endDate)
-          .order("date", { ascending: true });
+        const q = query(
+          collection(db, "mood_entries"),
+          where("userId", "==", user.uid),
+          where("date", ">=", startDate),
+          where("date", "<=", endDate),
+          orderBy("date")
+        );
+        const snapshot = await getDocs(q);
 
-        if (fetchError) {
-          setError(fetchError.message);
-          return [];
-        }
-
-        return (data as MoodEntry[]) ?? [];
+        return snapshot.docs.map(toMoodEntry);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "월별 항목 조회 실패";
         setError(msg);
@@ -119,7 +149,7 @@ export function useMoodEntries(): UseMoodEntriesReturn {
     async (data: {
       characterId: string;
       date: string;
-      moodCategory: string;
+      moodCategory: MoodCategory;
       outfitFile: string;
       expressionFile: string;
     }): Promise<MoodEntry | null> => {
@@ -130,54 +160,71 @@ export function useMoodEntries(): UseMoodEntriesReturn {
 
       try {
         // 기존 항목 확인
-        const { data: existing } = await supabase
-          .from("mood_entries")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("date", data.date)
-          .maybeSingle();
+        const existingQuery = query(
+          collection(db, "mood_entries"),
+          where("userId", "==", user.uid),
+          where("date", "==", data.date)
+        );
+        const existingSnapshot = await getDocs(existingQuery);
 
-        if (existing) {
+        if (!existingSnapshot.empty) {
           // 기존 항목 수정
-          const { data: updated, error: updateError } = await supabase
-            .from("mood_entries")
-            .update({
-              mood_category: data.moodCategory,
-              outfit_file: data.outfitFile,
-              expression_file: data.expressionFile,
-              character_id: data.characterId,
-            })
-            .eq("id", existing.id)
-            .select()
-            .single();
+          const existingDoc = existingSnapshot.docs[0];
+          const entryRef = doc(db, "mood_entries", existingDoc.id);
+          await updateDoc(entryRef, {
+            moodCategory: data.moodCategory,
+            outfitFile: data.outfitFile,
+            expressionFile: data.expressionFile,
+            characterId: data.characterId,
+            updatedAt: serverTimestamp(),
+          });
 
-          if (updateError) {
-            setError(updateError.message);
-            return null;
-          }
+          // 수정 후 로컬에서 MoodEntry 구성 (서버 타임스탬프는 아직 미반영이므로 기존 값 활용)
+          const existingData = existingDoc.data();
+          const updated: MoodEntry = {
+            id: existingDoc.id,
+            user_id: user.uid,
+            character_id: data.characterId,
+            date: data.date,
+            mood_category: data.moodCategory,
+            outfit_file: data.outfitFile,
+            expression_file: data.expressionFile,
+            composite_image_url: existingData.compositeImageUrl ?? null,
+            created_at:
+              existingData.createdAt?.toDate().toISOString() ??
+              new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
 
-          return updated as MoodEntry;
+          return updated;
         } else {
           // 새 항목 생성
-          const { data: created, error: createError } = await supabase
-            .from("mood_entries")
-            .insert({
-              user_id: user.id,
-              character_id: data.characterId,
-              date: data.date,
-              mood_category: data.moodCategory,
-              outfit_file: data.outfitFile,
-              expression_file: data.expressionFile,
-            })
-            .select()
-            .single();
+          const docRef = await addDoc(collection(db, "mood_entries"), {
+            userId: user.uid,
+            characterId: data.characterId,
+            date: data.date,
+            moodCategory: data.moodCategory,
+            outfitFile: data.outfitFile,
+            expressionFile: data.expressionFile,
+            compositeImageUrl: null,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
 
-          if (createError) {
-            setError(createError.message);
-            return null;
-          }
+          const created: MoodEntry = {
+            id: docRef.id,
+            user_id: user.uid,
+            character_id: data.characterId,
+            date: data.date,
+            mood_category: data.moodCategory,
+            outfit_file: data.outfitFile,
+            expression_file: data.expressionFile,
+            composite_image_url: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
 
-          return created as MoodEntry;
+          return created;
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "무드 항목 저장 실패";

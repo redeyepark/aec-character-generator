@@ -2,12 +2,45 @@
 
 /**
  * 캐릭터 CRUD 훅
- * Supabase characters 테이블에 대한 조회/생성/수정 기능을 제공한다.
+ * Firestore characters 컬렉션에 대한 조회/생성/수정 기능을 제공한다.
  */
 import { useState, useCallback } from "react";
-import { supabase } from "@/app/lib/supabase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  getDoc,
+  doc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "@/app/lib/firebase";
 import type { BaseCharacter } from "@/app/lib/types";
+import type { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { useAuth } from "./useAuth";
+
+/**
+ * Firestore 문서를 BaseCharacter 도메인 타입으로 변환
+ */
+function toBaseCharacter(
+  docSnap: QueryDocumentSnapshot<DocumentData>
+): BaseCharacter {
+  const data = docSnap.data();
+  return {
+    id: docSnap.id,
+    user_id: data.userId,
+    face: data.face,
+    hair: data.hair,
+    mustache: data.mustache ?? null,
+    glasses: data.glasses ?? null,
+    created_at:
+      data.createdAt?.toDate().toISOString() ?? new Date().toISOString(),
+    updated_at:
+      data.updatedAt?.toDate().toISOString() ?? new Date().toISOString(),
+  };
+}
 
 interface UseCharacterReturn {
   /** 현재 사용자의 캐릭터 */
@@ -54,22 +87,21 @@ export function useCharacter(): UseCharacterReturn {
     setError(null);
 
     try {
-      console.log("[캐릭터 조회 시작]", { userId: user.id });
+      console.log("[캐릭터 조회 시작]", { userId: user.uid });
 
-      const { data, error: fetchError } = await supabase
-        .from("characters")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const q = query(
+        collection(db, "characters"),
+        where("userId", "==", user.uid)
+      );
+      const snapshot = await getDocs(q);
 
-      if (fetchError) {
-        const errorMsg = `캐릭터 조회 실패: ${fetchError.message}`;
-        setError(errorMsg);
-        console.error("[캐릭터 조회 에러]", fetchError);
+      if (snapshot.empty) {
+        console.log("[캐릭터 조회 성공] 캐릭터 없음");
+        setCharacter(null);
         return null;
       }
 
-      const result = data as BaseCharacter | null;
+      const result = toBaseCharacter(snapshot.docs[0]);
       console.log("[캐릭터 조회 성공]", result);
       setCharacter(result);
       return result;
@@ -102,36 +134,32 @@ export function useCharacter(): UseCharacterReturn {
       setError(null);
 
       try {
-        console.log("[캐릭터 생성 시작]", { userId: user.id, data });
+        console.log("[캐릭터 생성 시작]", { userId: user.uid, data });
 
-        const { data: created, error: createError } = await supabase
-          .from("characters")
-          .insert({
-            user_id: user.id,
-            face: data.face,
-            hair: data.hair,
-            mustache: data.mustache,
-            glasses: data.glasses,
-          })
-          .select()
-          .single();
+        const docRef = await addDoc(collection(db, "characters"), {
+          userId: user.uid,
+          face: data.face,
+          hair: data.hair,
+          mustache: data.mustache,
+          glasses: data.glasses,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
 
-        if (createError) {
-          const errorMsg = `캐릭터 생성 실패: ${createError.message}`;
-          setError(errorMsg);
-          console.error("[캐릭터 생성 에러]", createError);
-          return null;
-        }
+        // 생성된 문서를 다시 읽어와서 서버 타임스탬프가 반영된 데이터를 가져온다
+        const createdDoc = await getDoc(docRef);
 
-        if (!created) {
+        if (!createdDoc.exists()) {
           const msg = "캐릭터 생성 후 데이터를 받을 수 없습니다.";
           setError(msg);
           console.error("[캐릭터 생성] 반환된 데이터 없음");
           return null;
         }
 
-        console.log("[캐릭터 생성 성공]", created);
-        const result = created as BaseCharacter;
+        const result = toBaseCharacter(
+          createdDoc as QueryDocumentSnapshot<DocumentData>
+        );
+        console.log("[캐릭터 생성 성공]", result);
         setCharacter(result);
         await refreshHasCharacter();
         return result;
@@ -169,37 +197,36 @@ export function useCharacter(): UseCharacterReturn {
       setError(null);
 
       try {
-        console.log("[캐릭터 수정 시작]", { characterId: id, userId: user.id, data });
+        console.log("[캐릭터 수정 시작]", {
+          characterId: id,
+          userId: user.uid,
+          data,
+        });
 
-        const { data: updated, error: updateError } = await supabase
-          .from("characters")
-          .update({
-            face: data.face,
-            hair: data.hair,
-            mustache: data.mustache,
-            glasses: data.glasses,
-          })
-          .eq("id", id)
-          .eq("user_id", user.id)
-          .select()
-          .single();
+        const charRef = doc(db, "characters", id);
+        await updateDoc(charRef, {
+          face: data.face,
+          hair: data.hair,
+          mustache: data.mustache,
+          glasses: data.glasses,
+          updatedAt: serverTimestamp(),
+        });
 
-        if (updateError) {
-          const errorMsg = `캐릭터 수정 실패: ${updateError.message}`;
-          setError(errorMsg);
-          console.error("[캐릭터 수정 에러]", updateError);
-          return null;
-        }
+        // 수정된 문서를 다시 읽어온다
+        const updatedDoc = await getDoc(charRef);
 
-        if (!updated) {
-          const msg = "캐릭터 수정 후 데이터를 받을 수 없습니다. 권한을 확인해주세요.";
+        if (!updatedDoc.exists()) {
+          const msg =
+            "캐릭터 수정 후 데이터를 받을 수 없습니다. 권한을 확인해주세요.";
           setError(msg);
           console.error("[캐릭터 수정] 반환된 데이터 없음");
           return null;
         }
 
-        console.log("[캐릭터 수정 성공]", updated);
-        const result = updated as BaseCharacter;
+        const result = toBaseCharacter(
+          updatedDoc as QueryDocumentSnapshot<DocumentData>
+        );
+        console.log("[캐릭터 수정 성공]", result);
         setCharacter(result);
         return result;
       } catch (err) {
