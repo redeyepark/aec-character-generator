@@ -290,123 +290,137 @@ function MoodPageContent() {
         </p>
       </header>
 
-      {/* 메인 콘텐츠 */}
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-        {/* 왼쪽: 선택기 패널 */}
-        <div className="flex flex-col gap-6">
-          {/* 기분 카테고리 선택 */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-700">
-                오늘의 기분
-              </h3>
-              {moodState.moodCategory && (
-                <button
-                  type="button"
-                  onClick={handleRerollExpression}
-                  aria-label="표정 다시 뽑기"
-                  className="px-3 py-1 text-xs font-medium rounded-full
-                             border border-blue-300 text-blue-600 bg-blue-50
-                             hover:bg-blue-100 active:bg-blue-200
-                             transition-all duration-150 cursor-pointer
-                             focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
-                >
-                  다시 뽑기
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-              {MOOD_CATEGORIES.map((mood) => {
-                const isSelected = moodState.moodCategory === mood.id;
-                return (
-                  <button
-                    key={mood.id}
-                    type="button"
-                    onClick={() => handleMoodSelect(mood.id)}
-                    aria-label={`${mood.nameKo} (${mood.nameEn})`}
-                    aria-pressed={isSelected}
-                    className={`flex flex-col items-center justify-center p-2 rounded-lg
-                               border-2 transition-all duration-150 cursor-pointer
-                               focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1
-                               ${
-                                 isSelected
-                                   ? "border-blue-500 bg-blue-50 shadow-md"
-                                   : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                               }`}
-                  >
-                    <span className="text-xl" aria-hidden="true">
-                      {MOOD_ICONS[mood.id]}
-                    </span>
-                    <span
-                      className={`text-xs font-medium mt-1 ${
-                        isSelected ? "text-blue-700" : "text-gray-600"
-                      }`}
-                    >
-                      {mood.nameKo}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      {/* 메인 콘텐츠 - 단일 컬럼 레이아웃 (캐릭터 상단, 선택기 하단) */}
+      <div className="max-w-3xl mx-auto flex flex-col gap-6 md:gap-8">
+        {/* 상단: 캐릭터 미리보기 */}
+        <div className="flex flex-col items-center">
+          <h3 className="text-sm font-medium text-gray-500 mb-3">
+            캐릭터 미리보기
+          </h3>
+          <CharacterCanvas
+            composited={previewCanvas}
+            isLoading={isPreviewLoading}
+          />
+        </div>
 
-          {/* 의상 카테고리 선택 */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-700">
-                오늘의 의상
-              </h3>
-              {moodState.outfitCategory && (
-                <button
-                  type="button"
-                  onClick={handleRerollOutfit}
-                  aria-label="의상 다시 뽑기"
-                  className="px-3 py-1 text-xs font-medium rounded-full
-                             border border-green-300 text-green-600 bg-green-50
-                             hover:bg-green-100 active:bg-green-200
-                             transition-all duration-150 cursor-pointer
-                             focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1"
-                >
-                  다시 뽑기
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-              {SPECIFIC_OUTFIT_CATEGORIES.map((outfit) => {
-                const isSelected = moodState.outfitCategory === outfit.id;
-                return (
+        {/* 하단: 선택기 패널 */}
+        <div className="flex flex-col gap-6">
+          {/* 기분/의상 카테고리 - 데스크톱에서 2열 그리드 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 기분 카테고리 선택 */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  오늘의 기분
+                </h3>
+                {moodState.moodCategory && (
                   <button
-                    key={outfit.id}
                     type="button"
-                    onClick={() =>
-                      handleOutfitSelect(
-                        outfit.id as Exclude<OutfitCategory, "all">
-                      )
-                    }
-                    aria-label={`${outfit.nameKo} (${outfit.nameEn})`}
-                    aria-pressed={isSelected}
-                    className={`flex flex-col items-center justify-center p-2 rounded-lg
-                               border-2 transition-all duration-150 cursor-pointer
-                               focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1
-                               ${
-                                 isSelected
-                                   ? "border-green-500 bg-green-50 shadow-md"
-                                   : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                               }`}
+                    onClick={handleRerollExpression}
+                    aria-label="표정 다시 뽑기"
+                    className="px-3 py-1 text-xs font-medium rounded-full
+                               border border-blue-300 text-blue-600 bg-blue-50
+                               hover:bg-blue-100 active:bg-blue-200
+                               transition-all duration-150 cursor-pointer
+                               focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
                   >
-                    <span className="text-xl" aria-hidden="true">
-                      {OUTFIT_ICONS[outfit.id as Exclude<OutfitCategory, "all">]}
-                    </span>
-                    <span
-                      className={`text-xs font-medium mt-1 ${
-                        isSelected ? "text-green-700" : "text-gray-600"
-                      }`}
-                    >
-                      {outfit.nameKo}
-                    </span>
+                    다시 뽑기
                   </button>
-                );
-              })}
+                )}
+              </div>
+              <div className="grid grid-cols-4 sm:grid-cols-7 md:grid-cols-4 gap-2">
+                {MOOD_CATEGORIES.map((mood) => {
+                  const isSelected = moodState.moodCategory === mood.id;
+                  return (
+                    <button
+                      key={mood.id}
+                      type="button"
+                      onClick={() => handleMoodSelect(mood.id)}
+                      aria-label={`${mood.nameKo} (${mood.nameEn})`}
+                      aria-pressed={isSelected}
+                      className={`flex flex-col items-center justify-center p-2 rounded-lg
+                                 border-2 transition-all duration-150 cursor-pointer
+                                 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1
+                                 ${
+                                   isSelected
+                                     ? "border-blue-500 bg-blue-50 shadow-md"
+                                     : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                                 }`}
+                    >
+                      <span className="text-xl" aria-hidden="true">
+                        {MOOD_ICONS[mood.id]}
+                      </span>
+                      <span
+                        className={`text-xs font-medium mt-1 ${
+                          isSelected ? "text-blue-700" : "text-gray-600"
+                        }`}
+                      >
+                        {mood.nameKo}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 의상 카테고리 선택 */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  오늘의 의상
+                </h3>
+                {moodState.outfitCategory && (
+                  <button
+                    type="button"
+                    onClick={handleRerollOutfit}
+                    aria-label="의상 다시 뽑기"
+                    className="px-3 py-1 text-xs font-medium rounded-full
+                               border border-green-300 text-green-600 bg-green-50
+                               hover:bg-green-100 active:bg-green-200
+                               transition-all duration-150 cursor-pointer
+                               focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1"
+                  >
+                    다시 뽑기
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-3 gap-2">
+                {SPECIFIC_OUTFIT_CATEGORIES.map((outfit) => {
+                  const isSelected = moodState.outfitCategory === outfit.id;
+                  return (
+                    <button
+                      key={outfit.id}
+                      type="button"
+                      onClick={() =>
+                        handleOutfitSelect(
+                          outfit.id as Exclude<OutfitCategory, "all">
+                        )
+                      }
+                      aria-label={`${outfit.nameKo} (${outfit.nameEn})`}
+                      aria-pressed={isSelected}
+                      className={`flex flex-col items-center justify-center p-2 rounded-lg
+                                 border-2 transition-all duration-150 cursor-pointer
+                                 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1
+                                 ${
+                                   isSelected
+                                     ? "border-green-500 bg-green-50 shadow-md"
+                                     : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                                 }`}
+                    >
+                      <span className="text-xl" aria-hidden="true">
+                        {OUTFIT_ICONS[outfit.id as Exclude<OutfitCategory, "all">]}
+                      </span>
+                      <span
+                        className={`text-xs font-medium mt-1 ${
+                          isSelected ? "text-green-700" : "text-gray-600"
+                        }`}
+                      >
+                        {outfit.nameKo}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -458,17 +472,6 @@ function MoodPageContent() {
               {pageError || moodError}
             </div>
           )}
-        </div>
-
-        {/* 오른쪽: 미리보기 */}
-        <div className="flex flex-col items-center">
-          <h3 className="text-sm font-medium text-gray-500 mb-3">
-            캐릭터 미리보기
-          </h3>
-          <CharacterCanvas
-            composited={previewCanvas}
-            isLoading={isPreviewLoading}
-          />
         </div>
       </div>
     </main>
