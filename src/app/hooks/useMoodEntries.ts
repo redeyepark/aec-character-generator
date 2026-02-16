@@ -159,7 +159,7 @@ export function useMoodEntries(): UseMoodEntriesReturn {
       setError(null);
 
       try {
-        // 기존 항목 확인
+        // 기존 항목 확인 (복합 인덱스를 사용한 서버 측 쿼리)
         const existingQuery = query(
           collection(db, "mood_entries"),
           where("userId", "==", user.uid),
@@ -168,8 +168,8 @@ export function useMoodEntries(): UseMoodEntriesReturn {
         const existingSnapshot = await getDocs(existingQuery);
 
         if (!existingSnapshot.empty) {
-          // 기존 항목 수정
           const existingDoc = existingSnapshot.docs[0];
+          // 기존 항목 수정
           const entryRef = doc(db, "mood_entries", existingDoc.id);
           await updateDoc(entryRef, {
             moodCategory: data.moodCategory,
