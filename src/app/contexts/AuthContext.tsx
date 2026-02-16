@@ -19,11 +19,15 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   sendEmailVerification,
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
 } from "firebase/auth";
 import {
   doc,
   setDoc,
   getDoc,
+  deleteDoc,
   collection,
   query,
   where,
@@ -57,6 +61,8 @@ export interface AuthContextType {
   refreshHasCharacter: () => Promise<void>;
   /** 인증 메일 재발송 */
   resendVerificationEmail: () => Promise<{ error: string | null }>;
+  /** 회원 탈퇴 (Firestore 데이터 삭제 + Auth 계정 삭제) */
+  deleteAccount: (password: string) => Promise<{ error: string | null }>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -277,6 +283,79 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsAdmin(false);
   }, []);
 
+  // 회원 탈퇴: 재인증 → Firestore 데이터 삭제 → Auth 계정 삭제
+  const deleteAccount = useCallback(
+    async (password: string): Promise<{ error: string | null }> => {
+      if (!user || !user.email) {
+        return { error: "로그인된 사용자가 없습니다." };
+      }
+
+      try {
+        // 1. 비밀번호로 재인증 (Firebase는 계정 삭제 전 최근 로그인을 요구함)
+        const credential = EmailAuthProvider.credential(user.email, password);
+        await reauthenticateWithCredential(user, credential);
+
+        // 2. mood_entries 컬렉션에서 본인 문서 전체 삭제
+        const moodQuery = query(
+          collection(db, "mood_entries"),
+          where("userId", "==", user.uid)
+        );
+        const moodSnapshot = await getDocs(moodQuery);
+        const moodDeletes = moodSnapshot.docs.map((docSnap) =>
+          deleteDoc(docSnap.ref)
+        );
+        await Promise.all(moodDeletes);
+
+        // 3. characters 컬렉션에서 본인 문서 전체 삭제
+        const charQuery = query(
+          collection(db, "characters"),
+          where("userId", "==", user.uid)
+        );
+        const charSnapshot = await getDocs(charQuery);
+        const charDeletes = charSnapshot.docs.map((docSnap) =>
+          deleteDoc(docSnap.ref)
+        );
+        await Promise.all(charDeletes);
+
+        // 4. profiles/{uid} 문서 삭제
+        await deleteDoc(doc(db, "profiles", user.uid));
+
+        // 5. Firebase Auth 계정 삭제
+        await deleteUser(user);
+
+        // 6. 로컬 상태 초기화 (onAuthStateChanged가 자동으로 발생하지만 명시적 초기화)
+        setUser(null);
+        setHasCharacter(false);
+        setIsAdmin(false);
+
+        return { error: null };
+      } catch (err) {
+        const firebaseCode = (err as { code?: string }).code;
+
+        // 잘못된 비밀번호
+        if (
+          firebaseCode === "auth/wrong-password" ||
+          firebaseCode === "auth/invalid-credential"
+        ) {
+          return { error: "비밀번호가 올바르지 않습니다." };
+        }
+
+        // 너무 많은 요청
+        if (firebaseCode === "auth/too-many-requests") {
+          return { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." };
+        }
+
+        return {
+          error:
+            err instanceof Error
+              ? err.message
+              : "회원 탈퇴 중 오류가 발생했습니다.",
+        };
+      }
+    },
+    [user]
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -290,6 +369,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         signOut,
         refreshHasCharacter,
         resendVerificationEmail,
+        deleteAccount,
       }}
     >
       {children}

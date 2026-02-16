@@ -8,11 +8,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // profiles: 본인 문서만 읽기/쓰기
+    // profiles: 본인 문서만 읽기/쓰기/삭제
     match /profiles/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
     // characters: 본인 문서만 읽기/쓰기
@@ -22,17 +23,17 @@ service cloud.firestore {
       allow update: if request.auth != null
                     && request.auth.uid == resource.data.userId
                     && request.auth.uid == request.resource.data.userId;
-      allow delete: if false;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
-    // mood_entries: 본인 문서만 읽기/쓰기
+    // mood_entries: 본인 문서만 읽기/쓰기/삭제
     match /mood_entries/{entryId} {
       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
       allow update: if request.auth != null
                     && request.auth.uid == resource.data.userId
                     && request.auth.uid == request.resource.data.userId;
-      allow delete: if false;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
   }
 }
