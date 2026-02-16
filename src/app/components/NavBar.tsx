@@ -12,7 +12,6 @@ import { useAuth } from "@/app/hooks/useAuth";
 const NAV_LINKS = [
   { href: "/mood/", label: "오늘의 기분" },
   { href: "/diary/", label: "다이어리" },
-  { href: "/create/", label: "캐릭터 수정" },
 ] as const;
 
 export default function NavBar() {

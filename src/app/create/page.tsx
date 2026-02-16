@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * 캐릭터 생성/수정 위자드 페이지
+ * 캐릭터 생성 위자드 페이지
  * 4단계 위자드를 통해 베이스 캐릭터(얼굴, 헤어, 수염, 안경)를 설정한다.
- * 실시간 미리보기를 제공하며, 기존 캐릭터가 있으면 수정 모드로 동작한다.
+ * 실시간 미리보기를 제공한다. 기존 캐릭터가 있으면 무드 페이지로 리다이렉트한다.
  */
 import { useState, useEffect, useCallback, useMemo } from "react";
 import AuthGuard from "@/app/components/AuthGuard";
@@ -30,7 +30,7 @@ const WIZARD_STEPS = [
 ];
 
 function CreatePageContent() {
-  const { character, loading: charLoading, fetchCharacter, createCharacter, updateCharacter } = useCharacter();
+  const { loading: charLoading, fetchCharacter, createCharacter } = useCharacter();
 
   // 위자드 상태
   const [wizard, setWizard] = useState<WizardState>({
@@ -46,20 +46,12 @@ function CreatePageContent() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
 
-  // 초기 로드: 기존 캐릭터 불러오기
+  // 초기 로드: 기존 캐릭터가 있으면 무드 페이지로 리다이렉트
   useEffect(() => {
     fetchCharacter().then((existing) => {
       if (existing) {
-        setIsEditMode(true);
-        setWizard({
-          step: 1,
-          face: existing.face,
-          hair: existing.hair,
-          mustache: existing.mustache,
-          glasses: existing.glasses,
-        });
+        window.location.href = "/mood/";
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -142,12 +134,7 @@ function CreatePageContent() {
         glasses: wizard.glasses,
       };
 
-      let result = null;
-      if (isEditMode && character?.id) {
-        result = await updateCharacter(character.id, data);
-      } else {
-        result = await createCharacter(data);
-      }
+      const result = await createCharacter(data);
 
       // 저장 실패 시 에러 메시지 표시
       if (!result) {
@@ -164,7 +151,7 @@ function CreatePageContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [wizard, isEditMode, character, createCharacter, updateCharacter]);
+  }, [wizard, createCharacter]);
 
   // 로딩 중
   if (charLoading) {
@@ -186,7 +173,7 @@ function CreatePageContent() {
       {/* 헤더 */}
       <header className="text-center mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-          {isEditMode ? "캐릭터 수정" : "캐릭터 생성"}
+          캐릭터 생성
         </h1>
         <p className="text-sm text-gray-500 mt-1">
           나만의 베이스 캐릭터를 만들어보세요
