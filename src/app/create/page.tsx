@@ -7,6 +7,7 @@
  */
 import { useState, useEffect, useCallback, useMemo } from "react";
 import AuthGuard from "@/app/components/AuthGuard";
+import OnboardingSlides from "@/app/components/OnboardingSlides";
 import WizardStep from "@/app/components/WizardStep";
 import AssetPicker from "@/app/components/AssetPicker";
 import CharacterCanvas from "@/app/components/CharacterCanvas";
@@ -51,6 +52,15 @@ function CreatePageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // 온보딩 슬라이드 상태
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // 온보딩 완료 핸들러
+  const handleOnboardingComplete = useCallback(() => {
+    try { localStorage.setItem('aec_onboarding_done', 'true'); } catch { /* localStorage 사용 불가 */ }
+    setShowOnboarding(false);
+  }, []);
+
   // 관리자 편집 모드: 관리자이면서 기존 캐릭터가 있는 경우
   const isEditMode = isAdmin && character !== null;
 
@@ -70,6 +80,13 @@ function CreatePageContent() {
           glasses: existing.glasses,
           skinTone: (existing.skinTone as SkinTone) ?? DEFAULT_SKIN_TONE,
         });
+      } else if (!existing && !isAdmin) {
+        // 신규 사용자: 온보딩 슬라이드 표시 (한 번만)
+        try {
+          if (!localStorage.getItem('aec_onboarding_done')) {
+            setShowOnboarding(true);
+          }
+        } catch { /* localStorage 사용 불가 */ }
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -194,6 +211,11 @@ function CreatePageContent() {
         </div>
       </div>
     );
+  }
+
+  // 온보딩 슬라이드 표시
+  if (showOnboarding) {
+    return <OnboardingSlides onComplete={handleOnboardingComplete} />;
   }
 
   return (

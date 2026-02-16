@@ -88,6 +88,17 @@ export const MOOD_CATEGORIES: MoodInfo[] = [
   { id: "determined", nameKo: "결연/강인", nameEn: "Determined/Strong", expressionGroup: 7 },
 ];
 
+// 기분별 색상 매핑 (달력 시각화용)
+export const MOOD_COLOR_MAP: Record<MoodCategory, { bg: string; text: string; dot: string }> = {
+  happy:      { bg: "bg-yellow-200", text: "text-yellow-900", dot: "bg-yellow-400" },
+  confident:  { bg: "bg-orange-200", text: "text-orange-900", dot: "bg-orange-400" },
+  calm:       { bg: "bg-blue-200",   text: "text-blue-900",   dot: "bg-blue-400" },
+  surprised:  { bg: "bg-purple-200", text: "text-purple-900", dot: "bg-purple-400" },
+  thoughtful: { bg: "bg-indigo-200", text: "text-indigo-900", dot: "bg-indigo-400" },
+  playful:    { bg: "bg-pink-200",   text: "text-pink-900",   dot: "bg-pink-400" },
+  determined: { bg: "bg-red-200",    text: "text-red-900",    dot: "bg-red-400" },
+};
+
 // 의상 카테고리 매핑 상수
 export const OUTFIT_CATEGORIES: OutfitInfo[] = [
   { id: "casual", nameKo: "캐주얼", nameEn: "Casual" },

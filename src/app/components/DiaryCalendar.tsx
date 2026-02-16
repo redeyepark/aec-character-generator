@@ -6,7 +6,8 @@
  * 날짜 클릭 시 해당 항목의 상세 정보를 표시한다.
  */
 import { useMemo } from "react";
-import type { MoodEntry } from "@/app/lib/types";
+import type { MoodEntry, MoodCategory } from "@/app/lib/types";
+import { MOOD_COLOR_MAP, MOOD_CATEGORIES } from "@/app/lib/types";
 
 interface DiaryCalendarProps {
   /** 표시할 연도 */
@@ -152,31 +153,59 @@ export default function DiaryCalendar({
           const hasEntry = !!entry;
           const dayOfWeek = (new Date(year, month - 1, cell.day)).getDay();
 
+          // 기분 색상 정보 (항목이 있을 때만)
+          const moodColor = hasEntry ? MOOD_COLOR_MAP[entry.mood_category as MoodCategory] : null;
+          // 기분 카테고리 한국어 이름 (aria-label용)
+          const moodNameKo = hasEntry
+            ? MOOD_CATEGORIES.find((m) => m.id === entry.mood_category)?.nameKo ?? entry.mood_category
+            : null;
+
+          // 셀 배경/텍스트 스타일 결정
+          let cellStyle: string;
+          if (isSelected) {
+            cellStyle = "bg-blue-500 text-white shadow-md";
+          } else if (isToday) {
+            cellStyle = "bg-blue-50 border-2 border-blue-300 text-blue-700";
+          } else if (hasEntry && moodColor) {
+            // 기분 색상 배경 적용 (주말 색상 대신 기분 텍스트 색상 우선)
+            cellStyle = `${moodColor.bg} ${moodColor.text} hover:opacity-80`;
+          } else {
+            cellStyle = "hover:bg-gray-50 text-gray-500";
+          }
+
+          // 주말 텍스트 색상: 기분 배경이 없고 선택되지 않은 경우에만 적용
+          const weekendStyle =
+            !isSelected && !(hasEntry && moodColor)
+              ? dayOfWeek === 0
+                ? "text-red-400"
+                : dayOfWeek === 6
+                  ? "text-blue-400"
+                  : ""
+              : "";
+
           return (
             <button
               key={cell.dateStr}
               type="button"
               onClick={() => onDateSelect(cell.dateStr)}
+              aria-label={hasEntry && moodNameKo ? `${cell.day}일 - ${moodNameKo}` : `${cell.day}일`}
               className={`aspect-square rounded-lg flex flex-col items-center justify-center
-                         text-sm transition-all duration-150 cursor-pointer
+                         relative text-sm transition-all duration-150 cursor-pointer
                          focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1
-                         ${
-                           isSelected
-                             ? "bg-blue-500 text-white shadow-md"
-                             : isToday
-                               ? "bg-blue-50 border-2 border-blue-300 text-blue-700"
-                               : hasEntry
-                                 ? "bg-gray-50 hover:bg-gray-100 text-gray-700"
-                                 : "hover:bg-gray-50 text-gray-500"
-                         }
-                         ${dayOfWeek === 0 && !isSelected ? "text-red-400" : ""}
-                         ${dayOfWeek === 6 && !isSelected ? "text-blue-400" : ""}`}
+                         ${cellStyle} ${weekendStyle}`}
             >
               <span className="text-xs font-medium">{cell.day}</span>
               {hasEntry && (
                 <span className="text-xs mt-0.5" aria-label={`기분: ${entry.mood_category}`}>
                   {MOOD_EMOJI[entry.mood_category] ?? "\u{1F60A}"}
                 </span>
+              )}
+              {/* 선택된 셀에 기분 색상 점 표시 */}
+              {isSelected && hasEntry && moodColor && (
+                <span
+                  className={`absolute bottom-1 right-1 w-2 h-2 rounded-full ${moodColor.dot}`}
+                  aria-hidden="true"
+                />
               )}
             </button>
           );

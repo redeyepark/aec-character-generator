@@ -306,158 +306,64 @@ function MoodPageContent() {
           />
         </div>
 
-        {/* 하단: 선택기 패널 */}
-        <div className="flex flex-col gap-6">
-          {/* 기분/의상 카테고리 - 데스크톱에서 2열 그리드 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* 기분 카테고리 선택 */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-700">
-                  오늘의 기분
-                </h3>
-                {moodState.moodCategory && (
+        {/* 하단: 선택기 패널 (단일 컬럼 플로우) */}
+        <div className="flex flex-col gap-4">
+          {/* 기분 카테고리 선택 (전체 너비) */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              오늘의 기분
+            </h3>
+            <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+              {MOOD_CATEGORIES.map((mood) => {
+                const isMoodSelected = moodState.moodCategory === mood.id;
+                return (
                   <button
+                    key={mood.id}
                     type="button"
-                    onClick={handleRerollExpression}
-                    aria-label="표정 다시 뽑기"
-                    className="px-3 py-1 text-xs font-medium rounded-full
-                               border border-blue-300 text-blue-600 bg-blue-50
-                               hover:bg-blue-100 active:bg-blue-200
-                               transition-all duration-150 cursor-pointer
-                               focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
+                    onClick={() => handleMoodSelect(mood.id)}
+                    aria-label={`${mood.nameKo} (${mood.nameEn})`}
+                    aria-pressed={isMoodSelected}
+                    className={`flex flex-col items-center justify-center p-2 rounded-lg
+                               border-2 transition-all duration-300 cursor-pointer
+                               focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1
+                               ${
+                                 isMoodSelected
+                                   ? "border-blue-500 bg-blue-50 shadow-md scale-105"
+                                   : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                               }`}
                   >
-                    다시 뽑기
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-4 sm:grid-cols-7 md:grid-cols-4 gap-2">
-                {MOOD_CATEGORIES.map((mood) => {
-                  const isSelected = moodState.moodCategory === mood.id;
-                  return (
-                    <button
-                      key={mood.id}
-                      type="button"
-                      onClick={() => handleMoodSelect(mood.id)}
-                      aria-label={`${mood.nameKo} (${mood.nameEn})`}
-                      aria-pressed={isSelected}
-                      className={`flex flex-col items-center justify-center p-2 rounded-lg
-                                 border-2 transition-all duration-150 cursor-pointer
-                                 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1
-                                 ${
-                                   isSelected
-                                     ? "border-blue-500 bg-blue-50 shadow-md"
-                                     : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                                 }`}
+                    <span className="text-xl" aria-hidden="true">
+                      {MOOD_ICONS[mood.id]}
+                    </span>
+                    <span
+                      className={`text-xs font-medium mt-1 ${
+                        isMoodSelected ? "text-blue-700" : "text-gray-600"
+                      }`}
                     >
-                      <span className="text-xl" aria-hidden="true">
-                        {MOOD_ICONS[mood.id]}
-                      </span>
-                      <span
-                        className={`text-xs font-medium mt-1 ${
-                          isSelected ? "text-blue-700" : "text-gray-600"
-                        }`}
-                      >
-                        {mood.nameKo}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 의상 카테고리 선택 */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-700">
-                  오늘의 의상
-                </h3>
-                {moodState.outfitCategory && (
-                  <button
-                    type="button"
-                    onClick={handleRerollOutfit}
-                    aria-label="의상 다시 뽑기"
-                    className="px-3 py-1 text-xs font-medium rounded-full
-                               border border-green-300 text-green-600 bg-green-50
-                               hover:bg-green-100 active:bg-green-200
-                               transition-all duration-150 cursor-pointer
-                               focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1"
-                  >
-                    다시 뽑기
+                      {mood.nameKo}
+                    </span>
                   </button>
-                )}
-              </div>
-              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-3 gap-2">
-                {SPECIFIC_OUTFIT_CATEGORIES.map((outfit) => {
-                  const isSelected = moodState.outfitCategory === outfit.id;
-                  return (
-                    <button
-                      key={outfit.id}
-                      type="button"
-                      onClick={() =>
-                        handleOutfitSelect(
-                          outfit.id as Exclude<OutfitCategory, "all">
-                        )
-                      }
-                      aria-label={`${outfit.nameKo} (${outfit.nameEn})`}
-                      aria-pressed={isSelected}
-                      className={`flex flex-col items-center justify-center p-2 rounded-lg
-                                 border-2 transition-all duration-150 cursor-pointer
-                                 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1
-                                 ${
-                                   isSelected
-                                     ? "border-green-500 bg-green-50 shadow-md"
-                                     : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                                 }`}
-                    >
-                      <span className="text-xl" aria-hidden="true">
-                        {OUTFIT_ICONS[outfit.id as Exclude<OutfitCategory, "all">]}
-                      </span>
-                      <span
-                        className={`text-xs font-medium mt-1 ${
-                          isSelected ? "text-green-700" : "text-gray-600"
-                        }`}
-                      >
-                        {outfit.nameKo}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* 액션 버튼 */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!canSave || isSaving || moodLoading}
-              className={`flex-1 px-6 py-3 rounded-lg font-medium text-white
-                         transition-all duration-150 cursor-pointer
-                         focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
-                         ${
-                           !canSave || isSaving || moodLoading
-                             ? "bg-gray-300 cursor-not-allowed"
-                             : "bg-blue-500 hover:bg-blue-600 active:bg-blue-700"
-                         }`}
-            >
-              {isSaving ? "저장 중..." : "오늘의 기분 저장"}
-            </button>
-
-            {previewCanvas && (
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="flex-1 px-6 py-3 rounded-lg font-medium
-                           bg-green-500 text-white hover:bg-green-600 active:bg-green-700
-                           transition-all duration-150 cursor-pointer
-                           focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
-              >
-                다운로드
-              </button>
-            )}
-          </div>
+          {/* 저장 버튼 (Primary CTA, 기분 선택 직후 배치) */}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!canSave || isSaving || moodLoading}
+            className={`w-full py-4 text-lg font-bold text-white rounded-xl
+                       transition-all duration-150 cursor-pointer
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
+                       ${
+                         !canSave || isSaving || moodLoading
+                           ? "bg-gray-300 cursor-not-allowed"
+                           : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+                       }`}
+          >
+            {isSaving ? "저장 중..." : "오늘의 기분 저장"}
+          </button>
 
           {/* 성공 메시지 */}
           {saveSuccess && (
@@ -474,6 +380,104 @@ function MoodPageContent() {
             >
               {pageError || moodError}
             </div>
+          )}
+
+          {/* 세부 조정 (접을 수 있는 섹션) */}
+          <details className="bg-white rounded-xl border border-gray-200">
+            <summary className="p-4 cursor-pointer text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-xl select-none">
+              세부 조정
+            </summary>
+            <div className="p-4 pt-0 flex flex-col gap-4">
+              {/* 의상 카테고리 선택 */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    의상 카테고리
+                  </h4>
+                  {moodState.outfitCategory && (
+                    <button
+                      type="button"
+                      onClick={handleRerollOutfit}
+                      aria-label="의상 다시 뽑기"
+                      className="px-3 py-1 text-xs font-medium rounded-full
+                                 border border-green-300 text-green-600 bg-green-50
+                                 hover:bg-green-100 active:bg-green-200
+                                 transition-all duration-150 cursor-pointer
+                                 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1"
+                    >
+                      의상 다시 뽑기
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                  {SPECIFIC_OUTFIT_CATEGORIES.map((outfit) => {
+                    const isOutfitSelected = moodState.outfitCategory === outfit.id;
+                    return (
+                      <button
+                        key={outfit.id}
+                        type="button"
+                        onClick={() =>
+                          handleOutfitSelect(
+                            outfit.id as Exclude<OutfitCategory, "all">
+                          )
+                        }
+                        aria-label={`${outfit.nameKo} (${outfit.nameEn})`}
+                        aria-pressed={isOutfitSelected}
+                        className={`flex flex-col items-center justify-center p-2 rounded-lg
+                                   border-2 transition-all duration-300 cursor-pointer
+                                   focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1
+                                   ${
+                                     isOutfitSelected
+                                       ? "border-green-500 bg-green-50 shadow-md scale-105"
+                                       : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                                   }`}
+                      >
+                        <span className="text-xl" aria-hidden="true">
+                          {OUTFIT_ICONS[outfit.id as Exclude<OutfitCategory, "all">]}
+                        </span>
+                        <span
+                          className={`text-xs font-medium mt-1 ${
+                            isOutfitSelected ? "text-green-700" : "text-gray-600"
+                          }`}
+                        >
+                          {outfit.nameKo}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 표정 다시 뽑기 버튼 (기분 카드 헤더에서 이동) */}
+              {moodState.moodCategory && (
+                <button
+                  type="button"
+                  onClick={handleRerollExpression}
+                  aria-label="표정 다시 뽑기"
+                  className="w-full py-2 text-sm font-medium rounded-lg
+                             border border-blue-300 text-blue-600 bg-blue-50
+                             hover:bg-blue-100 active:bg-blue-200
+                             transition-all duration-150 cursor-pointer
+                             focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
+                >
+                  표정 다시 뽑기
+                </button>
+              )}
+            </div>
+          </details>
+
+          {/* 다운로드 버튼 (세컨더리 아웃라인 스타일) */}
+          {previewCanvas && (
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="w-full py-3 rounded-xl font-medium
+                         border border-gray-300 text-gray-600 bg-white hover:bg-gray-50
+                         transition-all duration-150 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+            >
+              다운로드
+            </button>
           )}
         </div>
       </div>
