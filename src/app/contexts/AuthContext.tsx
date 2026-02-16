@@ -18,6 +18,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
+  sendEmailVerification,
 } from "firebase/auth";
 import {
   doc,
@@ -170,6 +171,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         } catch (profileError) {
           console.error("프로필 생성 오류:", profileError);
+        }
+
+        // 인증 메일 발송 (실패해도 회원가입은 정상 진행)
+        try {
+          await sendEmailVerification(newUser);
+        } catch (emailError) {
+          console.error("인증 메일 발송 오류:", emailError);
         }
 
         return { error: null };
