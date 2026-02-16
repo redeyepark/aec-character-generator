@@ -7,7 +7,7 @@
 | SPEC ID | SPEC-FIREBASE-001 |
 | 제목 | Supabase to Firebase Migration |
 | 생성일 | 2026-02-15 |
-| 상태 | Planned |
+| 상태 | Completed |
 | 우선순위 | High |
 | 라이프사이클 | spec-first |
 | 담당 | expert-frontend, expert-backend |

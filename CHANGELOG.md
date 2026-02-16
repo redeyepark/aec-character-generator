@@ -7,6 +7,34 @@
 
 ---
 
+## [1.1.0] - 2026-02-16
+
+### Firebase 마이그레이션 및 안정화 (SPEC-FIREBASE-001)
+
+#### 변경
+
+- Supabase (Auth + PostgreSQL)에서 Firebase (Authentication + Cloud Firestore)로 백엔드 전면 마이그레이션
+- 캐릭터 생성은 최초 1회만 가능하도록 수정 (수정 모드 및 내비게이션 링크 제거)
+
+#### 수정
+
+- Firestore `mood_entries` 복합 인덱스(`userId` + `date`) 추가 및 서버 측 쿼리 복원
+- 로그인 시 `hasCharacter` 확인 race condition 수정 (캐릭터 확인 완료 후 로딩 종료)
+- 오늘의 기분 페이지 레이아웃 개선 (캐릭터 상단 배치)
+
+#### 추가
+
+- `firestore.rules`: Firestore 보안 규칙 (RLS 대체)
+- `firestore.indexes.json`: Firestore 복합 인덱스 정의
+- `firebase.json`, `.firebaserc`: Firebase 프로젝트 설정
+
+#### 삭제
+
+- Supabase 관련 코드 및 의존성 제거 (`@supabase/supabase-js`, `supabase.ts`, `database.types.ts`)
+- 내비게이션 바에서 "캐릭터 수정" 링크 제거
+
+---
+
 ## [1.0.0] - 2026-02-15
 
 ### Phase 3: UX 개선

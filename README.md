@@ -42,10 +42,10 @@ body(의상) -> face(얼굴) -> expression(표정) -> mustache(수염) -> hair(�
 
 ### 인증 및 데이터 관리
 
-- 이메일/비밀번호 기반 로그인/회원가입 (Supabase Auth)
+- 이메일/비밀번호 기반 로그인/회원가입 (Firebase Authentication)
 - 사용자별 캐릭터 및 무드 데이터 자동 저장
-- Row Level Security(RLS)로 데이터 격리
-- 자동 리다이렉트: 랜딩 -> 로그인 -> 캐릭터 생성(최초) 또는 무드 선택(재방문)
+- Firestore 보안 규칙으로 데이터 격리
+- 자동 리다이렉트: 랜딩 -> 로그인 -> 캐릭터 생성(최초 1회) 또는 무드 선택(재방문)
 
 ### PNG 다운로드
 
@@ -61,7 +61,7 @@ body(의상) -> face(얼굴) -> expression(표정) -> mustache(수염) -> hair(�
 | UI 라이브러리 | React 19 |
 | 언어 | TypeScript 5 |
 | 스타일링 | Tailwind CSS 4 |
-| 백엔드/인증 | Supabase (Auth + PostgreSQL) |
+| 백엔드/인증 | Firebase (Authentication + Cloud Firestore) |
 | 배포 | Cloudflare Pages |
 | 빌드 모드 | Static Export (`output: 'export'`) |
 
@@ -99,20 +99,29 @@ Pencil MCP 기반의 통합 디자인 시스템을 사용합니다.
 
 - Node.js 18 이상
 - npm 또는 yarn
-- Supabase 프로젝트 (무료 티어 가능)
+- Firebase 프로젝트 (무료 Spark 플랜 가능)
 
 ### 환경 변수 설정
 
 프로젝트 루트에 `.env.local` 파일을 생성합니다.
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 ```
 
 ### 데이터베이스 설정
 
-Supabase SQL Editor에서 `supabase/schema.sql` 파일의 내용을 실행하여 테이블과 RLS 정책을 생성합니다.
+Firebase 프로젝트에서 Cloud Firestore 데이터베이스를 생성한 후, Firestore 보안 규칙과 인덱스를 배포합니다.
+
+```bash
+# Firestore 보안 규칙 및 인덱스 배포
+npx firebase-tools deploy --only firestore
+```
 
 ### 설치 및 실행
 
@@ -200,10 +209,9 @@ AEC_today01/
 │   │   └── useMoodEntries.ts      # 무드 항목 CRUD 훅
 │   ├── lib/
 │   │   ├── assetManager.ts        # 에셋 로딩/인덱싱/분류
-│   │   ├── database.types.ts      # Supabase 생성 타입
+│   │   ├── firebase.ts             # Firebase 앱 초기화 및 서비스 내보내기
 │   │   ├── imageCompositor.ts     # Canvas 6층 레이어 이미지 합성
 │   │   ├── randomEngine.ts        # 랜덤 조합 알고리즘
-│   │   ├── supabase.ts            # Supabase 클라이언트 초기화
 │   │   └── types.ts               # TypeScript 타입 정의
 │   └── data/
 │       └── assetIndex.json        # 사전 빌드된 에셋 인덱스
@@ -211,7 +219,9 @@ AEC_today01/
 ├── scripts/
 │   ├── copyAssets.ts              # _AEC 에셋 복사 스크립트
 │   └── buildAssetIndex.ts         # 에셋 인덱스 JSON 빌드 스크립트
-├── supabase/schema.sql            # DB 스키마 (profiles, characters, mood_entries)
+├── firestore.rules               # Firestore 보안 규칙
+├── firestore.indexes.json        # Firestore 복합 인덱스 정의
+├── firebase.json                 # Firebase 프로젝트 설정
 ├── next.config.ts                 # 정적 내보내기 설정
 ├── package.json                   # 의존성 관리
 └── tsconfig.json                  # TypeScript 설정
@@ -221,9 +231,9 @@ AEC_today01/
 
 ## 데이터베이스 스키마
 
-Supabase PostgreSQL에 3개의 테이블을 사용하며, 모든 테이블에 Row Level Security(RLS)가 적용되어 있습니다.
+Cloud Firestore에 3개의 컬렉션을 사용하며, Firestore 보안 규칙이 적용되어 있습니다.
 
-| 테이블 | 용도 | 제약조건 |
+| 컬렉션 | 용도 | 제약조건 |
 |--------|------|----------|
 | `profiles` | 사용자 프로필 (display_name) | 사용자당 1개 |
 | `characters` | 베이스 캐릭터 (face, hair, mustache, glasses) | 사용자당 1개 |
