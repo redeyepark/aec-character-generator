@@ -8,8 +8,12 @@
 import { useState, useEffect, useCallback } from "react";
 import AuthGuard from "@/app/components/AuthGuard";
 import CharacterCanvas from "@/app/components/CharacterCanvas";
+import FortuneCard from "@/app/components/FortuneCard";
+import LuckyOutfitButton from "@/app/components/LuckyOutfitButton";
 import { useCharacter } from "@/app/hooks/useCharacter";
 import { useMoodEntries } from "@/app/hooks/useMoodEntries";
+import { useBirthInfo } from "@/app/hooks/useBirthInfo";
+import { useFortune } from "@/app/hooks/useFortune";
 import { compositeCharacter, downloadAsPNG } from "@/app/lib/imageCompositor";
 import type {
   MoodCategory,
@@ -72,6 +76,10 @@ function MoodPageContent() {
     loading: moodLoading,
     error: moodError,
   } = useMoodEntries();
+
+  // 운세 관련 훅
+  const { birthInfo } = useBirthInfo();
+  const { fortune, pickLuckyOutfit } = useFortune(birthInfo);
 
   // 일일 무드 상태
   const [moodState, setMoodState] = useState<DailyMoodState>({
@@ -264,6 +272,15 @@ function MoodPageContent() {
     }
   }, [previewCanvas]);
 
+  // 행운 의상 선택 핸들러
+  const handleLuckyOutfit = useCallback(() => {
+    const outfitCategory = moodState.outfitCategory ?? "casual";
+    const luckyOutfit = pickLuckyOutfit(outfitCategory as Exclude<OutfitCategory, "all">);
+    if (luckyOutfit) {
+      setMoodState(prev => ({ ...prev, outfitFile: luckyOutfit }));
+    }
+  }, [moodState.outfitCategory, pickLuckyOutfit]);
+
   // 초기 로딩 중
   if (isInitialLoading) {
     return (
@@ -295,6 +312,25 @@ function MoodPageContent() {
 
       {/* 메인 콘텐츠 - 단일 컬럼 레이아웃 (캐릭터 상단, 선택기 하단) */}
       <div className="max-w-3xl mx-auto flex flex-col gap-6 md:gap-8">
+        {/* 운세 카드 (사주 정보가 있을 때만 표시) */}
+        {fortune && <FortuneCard fortune={fortune} />}
+
+        {/* 사주 미입력 안내 배너 */}
+        {!birthInfo && (
+          <a
+            href="/settings"
+            className="block p-4 rounded-xl border border-amber-200 bg-amber-50 text-center
+                       hover:bg-amber-100 transition-colors duration-150"
+          >
+            <p className="text-sm font-medium text-amber-700">
+              운세 추천을 받아보시겠어요?
+            </p>
+            <p className="text-xs text-amber-500 mt-1">
+              설정에서 사주 정보를 입력하면 오늘의 운세와 행운 색상을 확인할 수 있습니다.
+            </p>
+          </a>
+        )}
+
         {/* 상단: 캐릭터 미리보기 */}
         <div className="flex flex-col items-center">
           <h3 className="text-sm font-medium text-gray-500 mb-3">
@@ -388,6 +424,14 @@ function MoodPageContent() {
               세부 조정
             </summary>
             <div className="p-4 pt-0 flex flex-col gap-4">
+              {/* 행운 의상 선택 버튼 (운세가 있을 때만 표시) */}
+              {fortune && (
+                <LuckyOutfitButton
+                  fortune={fortune}
+                  onSelectLuckyOutfit={handleLuckyOutfit}
+                />
+              )}
+
               {/* 의상 카테고리 선택 */}
               <div>
                 <div className="flex items-center justify-between mb-2">

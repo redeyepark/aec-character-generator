@@ -172,6 +172,10 @@ export interface Profile {
   display_name: string | null;
   role?: string; // 사용자 역할 (예: 'admin', 'user'). 없으면 기본 'user'
   created_at: string;
+  birthYear?: number; // 출생 연도 (운세 계산용)
+  birthMonth?: number; // 출생 월
+  birthDay?: number; // 출생 일
+  birthHour?: number; // 출생 시 (선택사항)
 }
 
 // 베이스 캐릭터 (고정 레이어: 얼굴, 헤어, 수염, 안경)
