@@ -7,6 +7,27 @@
 
 ---
 
+## [1.3.0] - 2026-02-16
+
+### 관리자 시스템 및 이메일 인증
+
+#### 추가
+
+- 관리자 시스템: `profiles` 컬렉션에 `role` 필드 추가, `isAdmin` 상태 및 `checkIsAdmin()` 함수
+- 관리자 전용 캐릭터 편집 모드 (`create/page.tsx`에서 기존 캐릭터 수정 가능)
+- 관리자 계정 생성 페이지 (`admin-setup/page.tsx`)
+- 회원가입 시 이메일 인증 메일 자동 발송 (`sendEmailVerification()`)
+- 인증 메일 재발송 버튼 및 발송 성공/실패 피드백 (`AuthForm.tsx`)
+
+#### 수정
+
+- 이메일 인증 rate limit 처리 (`auth/too-many-requests` 한국어 에러 메시지)
+- 메일 발송 실패 시에도 회원가입 정상 진행되도록 처리
+- 에셋 빌드 스크립트에 SVG 얼굴 파일 지원 추가 (`03_Face_SVG -> face-svg` 매핑, `.svg` 필터)
+- `buildAssetIndex.ts`에 `readSvgFiles()` 함수 및 face-svg 인덱스 자동 생성 추가
+
+---
+
 ## [1.2.0] - 2026-02-16
 
 ### SVG 얼굴 피부색 선택 (SPEC-SKIN-001)

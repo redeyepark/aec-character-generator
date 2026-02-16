@@ -43,9 +43,16 @@ body(의상) -> face(SVG 얼굴 + 피부색) -> expression(표정) -> mustache(�
 ### 인증 및 데이터 관리
 
 - 이메일/비밀번호 기반 로그인/회원가입 (Firebase Authentication)
+- 이메일 인증 (회원가입 시 인증 메일 자동 발송, 재발송 버튼 제공)
 - 사용자별 캐릭터 및 무드 데이터 자동 저장
 - Firestore 보안 규칙으로 데이터 격리
 - 자동 리다이렉트: 랜딩 -> 로그인 -> 캐릭터 생성(최초 1회) 또는 무드 선택(재방문)
+
+### 관리자 시스템
+
+- admin role 기반 관리자 권한 관리
+- 관리자 전용 캐릭터 편집 모드 (기존 캐릭터 수정 가능)
+- 관리자 계정 생성 페이지 (`/admin-setup`)
 
 ### PNG 다운로드
 
@@ -81,7 +88,7 @@ Pencil MCP 기반의 통합 디자인 시스템을 사용합니다.
 | 모서리 반경 | 12-16px |
 | 스타일 | Clean, Minimal, 따뜻한 유기적 느낌 |
 
-### 화면 구성 (5개)
+### 화면 구성 (6개)
 
 | 화면 | 경로 | 설명 |
 |------|------|------|
@@ -90,6 +97,7 @@ Pencil MCP 기반의 통합 디자인 시스템을 사용합니다.
 | 캐릭터 생성 | `/create` | 4단계 위자드 + 실시간 미리보기 |
 | 무드 선택 | `/mood` | 기분/의상 카테고리 선택 |
 | 무드 다이어리 | `/diary` | 캘린더 + 상세 기록 카드 |
+| 관리자 설정 | `/admin-setup` | 관리자 계정 생성 |
 
 ---
 
@@ -188,6 +196,7 @@ AEC_today01/
 │   ├── create/page.tsx            # 4단계 캐릭터 생성 위자드
 │   ├── mood/page.tsx              # 일일 무드 선택
 │   ├── diary/page.tsx             # 무드 다이어리 캘린더
+│   ├── admin-setup/page.tsx       # 관리자 계정 생성
 │   ├── components/                # UI 컴포넌트
 │   │   ├── AssetPicker.tsx        # 에셋 선택 그리드
 │   │   ├── AuthForm.tsx           # 로그인/회원가입 폼
@@ -239,7 +248,7 @@ Cloud Firestore에 3개의 컬렉션을 사용하며, Firestore 보안 규칙이
 
 | 컬렉션 | 용도 | 제약조건 |
 |--------|------|----------|
-| `profiles` | 사용자 프로필 (display_name) | 사용자당 1개 |
+| `profiles` | 사용자 프로필 (display_name, role) | 사용자당 1개 |
 | `characters` | 베이스 캐릭터 (face, hair, mustache, glasses, skinTone) | 사용자당 1개 |
 | `mood_entries` | 일일 무드 기록 (mood_category, outfit_file, expression_file) | 사용자당 하루 1개 |
 
