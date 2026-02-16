@@ -11,7 +11,7 @@ import { useAuth } from "@/app/hooks/useAuth";
 type AuthTab = "login" | "signup";
 
 export default function AuthForm() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resendVerificationEmail } = useAuth();
 
   const [activeTab, setActiveTab] = useState<AuthTab>("login");
   const [email, setEmail] = useState("");
@@ -19,6 +19,12 @@ export default function AuthForm() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
+  /** 회원가입 시 인증 메일 발송 성공 여부 */
+  const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  /** 인증 메일 재발송 중 여부 */
+  const [isResending, setIsResending] = useState(false);
+  /** 재발송 결과 메시지 */
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   // 폼 유효성 검사
   const isFormValid = email.trim().length > 0 && password.length >= 6;
@@ -28,6 +34,8 @@ export default function AuthForm() {
     setActiveTab(tab);
     setError(null);
     setSignUpSuccess(false);
+    setEmailSent(null);
+    setResendMessage(null);
   }, []);
 
   // 폼 제출 핸들러
@@ -55,6 +63,8 @@ export default function AuthForm() {
           setIsSubmitting(false);
         } else {
           setSignUpSuccess(true);
+          setEmailSent(result.emailSent ?? null);
+          setResendMessage(null);
           setIsSubmitting(false);
         }
       }
@@ -92,8 +102,44 @@ export default function AuthForm() {
 
       {/* 회원가입 성공 메시지 */}
       {signUpSuccess && (
-        <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
-          회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.
+        <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm">
+          <p className="text-green-700">
+            {emailSent === false
+              ? "회원가입이 완료되었습니다. 인증 메일 발송에 실패했습니다. 아래 버튼을 눌러 재발송해주세요."
+              : "회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요."}
+          </p>
+          {/* 재발송 결과 메시지 */}
+          {resendMessage && (
+            <p
+              className={`mt-1 text-xs ${
+                resendMessage.includes("재발송되었습니다")
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {resendMessage}
+            </p>
+          )}
+          {/* 인증 메일 재발송 버튼 */}
+          <button
+            type="button"
+            disabled={isResending}
+            onClick={async () => {
+              setIsResending(true);
+              setResendMessage(null);
+              const result = await resendVerificationEmail();
+              if (result.error) {
+                setResendMessage(result.error);
+              } else {
+                setResendMessage("인증 메일이 재발송되었습니다.");
+                setEmailSent(true);
+              }
+              setIsResending(false);
+            }}
+            className="mt-2 text-sm text-blue-600 underline hover:text-blue-800 disabled:text-gray-400 disabled:no-underline"
+          >
+            {isResending ? "발송 중..." : "인증 메일 재발송"}
+          </button>
         </div>
       )}
 

@@ -41,13 +41,18 @@ export interface AuthContextType {
   /** 인증 오류 메시지 */
   authError: string | null;
   /** 회원가입 */
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (
+    email: string,
+    password: string
+  ) => Promise<{ error: string | null; emailSent?: boolean }>;
   /** 로그인 */
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   /** 로그아웃 */
   signOut: () => Promise<void>;
   /** 캐릭터 보유 상태 갱신 */
   refreshHasCharacter: () => Promise<void>;
+  /** 인증 메일 재발송 */
+  resendVerificationEmail: () => Promise<{ error: string | null }>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -153,7 +158,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // 회원가입
   const signUp = useCallback(
-    async (email: string, password: string): Promise<{ error: string | null }> => {
+    async (
+      email: string,
+      password: string
+    ): Promise<{ error: string | null; emailSent?: boolean }> => {
       try {
         const userCredential = await createUserWithEmailAndPassword(
           auth,
@@ -174,13 +182,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // 인증 메일 발송 (실패해도 회원가입은 정상 진행)
+        let emailSent = false;
         try {
           await sendEmailVerification(newUser);
+          emailSent = true;
         } catch (emailError) {
           console.error("인증 메일 발송 오류:", emailError);
         }
 
-        return { error: null };
+        return { error: null, emailSent };
       } catch (err) {
         return {
           error:
@@ -190,6 +200,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     []
   );
+
+  // 인증 메일 재발송
+  const resendVerificationEmail = useCallback(async (): Promise<{
+    error: string | null;
+  }> => {
+    if (!user) {
+      return { error: "로그인된 사용자가 없습니다." };
+    }
+    try {
+      await sendEmailVerification(user);
+      return { error: null };
+    } catch (err) {
+      // rate limit 에러 처리
+      const firebaseCode = (err as { code?: string }).code;
+      if (firebaseCode === "auth/too-many-requests") {
+        return { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." };
+      }
+      return {
+        error:
+          err instanceof Error
+            ? err.message
+            : "인증 메일 발송 중 오류가 발생했습니다.",
+      };
+    }
+  }, [user]);
 
   // 로그인
   const signIn = useCallback(
@@ -225,6 +260,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         signIn,
         signOut,
         refreshHasCharacter,
+        resendVerificationEmail,
       }}
     >
       {children}
