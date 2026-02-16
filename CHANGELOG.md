@@ -7,6 +7,41 @@
 
 ---
 
+## [1.5.0] - 2026-02-17
+
+### 오늘의 운세 시스템 (SPEC-FORTUNE-001)
+
+#### 추가
+
+- 사주(四柱)/오행(五行) 기반 운세 계산 엔진 (`src/app/lib/fortune/`, 순수 TypeScript, 외부 의존성 없음)
+- 일일 운세 카드 컴포넌트 (`FortuneCard.tsx`) - 운세 등급 표시 (대길/길/보통/주의)
+- 행운의 색상 의상 추천 버튼 (`LuckyOutfitButton.tsx`) - 오행 기반 색상 매칭
+- 생년월일시 입력 폼 (`BirthInfoForm.tsx`) - 유효성 검증 포함
+- 생년월일시 정보 관리 훅 (`useBirthInfo.ts`)
+- 운세 계산 및 조회 훅 (`useFortune.ts`)
+- 무드 페이지 (`/mood`)에 운세 카드 통합 (캐릭터 미리보기 상단 배치)
+- `profiles` 컬렉션에 `birthYear`, `birthMonth`, `birthDay`, `birthHour` 필드 추가
+
+### 설정 페이지 및 회원 탈퇴
+
+#### 추가
+
+- 설정 페이지 (`/settings`) 신규 추가
+  - 사주 정보 (생년월일시) 입력 및 수정 섹션
+  - 회원 탈퇴 (Danger Zone) 섹션
+- 회원 탈퇴 기능
+  - 비밀번호 재인증 후 삭제 진행
+  - 전체 데이터 정리: `mood_entries`, `characters`, `profiles` 컬렉션 삭제
+  - Firebase Authentication 계정 삭제
+  - 경고 메시지 및 최종 확인 다이얼로그
+
+#### 변경
+
+- 화면 구성 6개에서 7개로 확장 (설정 페이지 추가)
+- 무드 선택 페이지(`/mood`)에 운세 카드 영역 추가
+
+---
+
 ## [1.4.0] - 2026-02-17
 
 ### Phase 1 UX/UI 개선 (SPEC-UX-001)
