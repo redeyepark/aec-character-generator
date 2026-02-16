@@ -75,9 +75,30 @@ export function getGlassesAssets(): string[] {
 }
 
 /**
+ * SVG 얼굴 에셋 목록 반환 (5종)
+ * assetIndex.json의 "face-svg" 키에서 파일명 배열을 가져온다.
+ */
+export function getFaceSvgAssets(): string[] {
+  return index["face-svg"] || [];
+}
+
+/**
+ * SVG 얼굴 에셋의 전체 경로 반환
+ * 반환값: /assets/face-svg/{filename} (public 기준 경로)
+ */
+export function getSvgAssetPath(filename: string): string {
+  return `/assets/face-svg/${encodeURIComponent(filename)}`;
+}
+
+/**
  * 레이어 종류와 파일명으로 에셋 경로 생성
+ * face 레이어에서 .svg 파일인 경우 face-svg 디렉토리 경로를 반환한다.
  * 반환값: /assets/{layer}/{filename} (public 기준 경로)
  */
 export function getAssetPath(layer: LayerType, filename: string): string {
+  // SVG 얼굴 파일은 face-svg 디렉토리에서 제공
+  if (layer === "face" && filename.endsWith(".svg")) {
+    return `/assets/face-svg/${encodeURIComponent(filename)}`;
+  }
   return `/assets/${layer}/${encodeURIComponent(filename)}`;
 }

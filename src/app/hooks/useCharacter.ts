@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 import type { BaseCharacter } from "@/app/lib/types";
+import { DEFAULT_SKIN_TONE } from "@/app/lib/types";
 import type { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { useAuth } from "./useAuth";
 
@@ -35,6 +36,7 @@ function toBaseCharacter(
     hair: data.hair,
     mustache: data.mustache ?? null,
     glasses: data.glasses ?? null,
+    skinTone: data.skinTone ?? DEFAULT_SKIN_TONE,
     created_at:
       data.createdAt?.toDate().toISOString() ?? new Date().toISOString(),
     updated_at:
@@ -57,6 +59,7 @@ interface UseCharacterReturn {
     hair: string;
     mustache: string | null;
     glasses: string | null;
+    skinTone: string;
   }) => Promise<BaseCharacter | null>;
   /** 캐릭터 수정 */
   updateCharacter: (
@@ -66,6 +69,7 @@ interface UseCharacterReturn {
       hair: string;
       mustache: string | null;
       glasses: string | null;
+      skinTone: string;
     }
   ) => Promise<BaseCharacter | null>;
 }
@@ -122,6 +126,7 @@ export function useCharacter(): UseCharacterReturn {
       hair: string;
       mustache: string | null;
       glasses: string | null;
+      skinTone: string;
     }): Promise<BaseCharacter | null> => {
       if (!user) {
         const msg = "사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.";
@@ -142,6 +147,7 @@ export function useCharacter(): UseCharacterReturn {
           hair: data.hair,
           mustache: data.mustache,
           glasses: data.glasses,
+          skinTone: data.skinTone,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
@@ -184,6 +190,7 @@ export function useCharacter(): UseCharacterReturn {
         hair: string;
         mustache: string | null;
         glasses: string | null;
+        skinTone: string;
       }
     ): Promise<BaseCharacter | null> => {
       if (!user) {
@@ -209,6 +216,7 @@ export function useCharacter(): UseCharacterReturn {
           hair: data.hair,
           mustache: data.mustache,
           glasses: data.glasses,
+          skinTone: data.skinTone,
           updatedAt: serverTimestamp(),
         });
 

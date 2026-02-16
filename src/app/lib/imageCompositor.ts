@@ -2,8 +2,10 @@
  * 이미지 합성기
  * 캐릭터 조합의 각 레이어 이미지를 Canvas에 순서대로 합성한다.
  */
-import type { CharacterCombination, LayerType } from "./types";
+import type { CharacterCombination, LayerType, SkinTone } from "./types";
+import { SKIN_TONE_COLORS, DEFAULT_SKIN_TONE } from "./types";
 import { getAssetPath } from "./assetManager";
+import { loadColoredSvgAsImage } from "./svgProcessor";
 
 // 이미지 캐시 (같은 파일을 반복 로드하지 않도록)
 const imageCache = new Map<string, HTMLImageElement>();
@@ -30,6 +32,15 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     };
     img.src = src;
   });
+}
+
+/**
+ * SkinTone ID로부터 hex 색상 코드를 조회한다.
+ * 일치하는 톤이 없으면 medium(중간 살색)을 기본값으로 반환한다.
+ */
+function getSkinToneHex(tone: SkinTone): string {
+  const found = SKIN_TONE_COLORS.find((c) => c.id === tone);
+  return found ? found.hex : SKIN_TONE_COLORS[2].hex; // 기본값: medium
 }
 
 /**
@@ -77,7 +88,17 @@ export async function compositeCharacter(
   for (const layer of layers) {
     if (layer.filename) {
       const path = getAssetPath(layer.type, layer.filename);
-      loadTasks.push({ type: layer.type, promise: loadImage(path) });
+
+      // SVG 얼굴 파일인 경우 피부색을 적용하여 로드, PNG는 기존 방식 유지
+      if (layer.type === "face" && layer.filename.endsWith(".svg")) {
+        const skinHex = getSkinToneHex(combination.skinTone ?? DEFAULT_SKIN_TONE);
+        loadTasks.push({
+          type: layer.type,
+          promise: loadColoredSvgAsImage(path, skinHex),
+        });
+      } else {
+        loadTasks.push({ type: layer.type, promise: loadImage(path) });
+      }
     }
   }
 

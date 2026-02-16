@@ -6,7 +6,7 @@
  * 캐릭터 미리보기와 다운로드 기능을 포함한다.
  */
 import { useEffect, useState, useCallback } from "react";
-import type { MoodEntry, BaseCharacter, CharacterCombination } from "@/app/lib/types";
+import type { MoodEntry, BaseCharacter, CharacterCombination, SkinTone } from "@/app/lib/types";
 import { MOOD_CATEGORIES } from "@/app/lib/types";
 import { compositeCharacter, downloadAsPNG } from "@/app/lib/imageCompositor";
 import CharacterCanvas from "./CharacterCanvas";
@@ -45,6 +45,7 @@ export default function DiaryEntryCard({ entry, character }: DiaryEntryCardProps
 
   // 캐릭터 합성
   useEffect(() => {
+    // skinTone을 포함하여 SVG 얼굴에 피부색이 올바르게 적용되도록 한다
     const combination: CharacterCombination = {
       body: entry.outfit_file,
       face: character.face,
@@ -52,6 +53,7 @@ export default function DiaryEntryCard({ entry, character }: DiaryEntryCardProps
       mustache: character.mustache,
       hair: character.hair,
       glasses: character.glasses,
+      skinTone: character.skinTone as SkinTone,
     };
 
     setIsLoading(true);

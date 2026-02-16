@@ -42,12 +42,14 @@ export interface CharacterCombination {
   mustache: string | null; // null = 수염 없음
   hair: string;
   glasses: string | null; // null = 안경 없음
+  skinTone?: SkinTone;
 }
 
 // 에셋 인덱스 구조 (assetIndex.json 의 타입)
 export interface AssetIndex {
   body: Record<OutfitCategory, string[]>;
   face: string[];
+  "face-svg"?: string[];
   expression: Record<string, string[]>; // 그룹 번호 → 파일명 배열
   mustache: {
     common: string[];
@@ -114,6 +116,40 @@ export const FACE_FILENAME_TO_SHAPE: Record<string, FaceShape> = {
   "square jaw 4.png": "square_jaw",
 };
 
+// 피부톤
+export type SkinTone = "fair" | "light" | "medium" | "warm" | "tan" | "brown" | "dark" | "deep";
+
+// 피부톤 정보
+export interface SkinToneInfo {
+  id: SkinTone;
+  nameKo: string;
+  hex: string;
+}
+
+// 피부톤 색상 상수 (8가지)
+export const SKIN_TONE_COLORS: SkinToneInfo[] = [
+  { id: "fair", nameKo: "밝은 살색", hex: "#FDEBD0" },
+  { id: "light", nameKo: "연한 살색", hex: "#F5CBA7" },
+  { id: "medium", nameKo: "중간 살색", hex: "#E0A96D" },
+  { id: "warm", nameKo: "따뜻한 살색", hex: "#C68642" },
+  { id: "tan", nameKo: "구릿빛", hex: "#8D5524" },
+  { id: "brown", nameKo: "갈색", hex: "#6B3A2A" },
+  { id: "dark", nameKo: "진한 갈색", hex: "#4A2511" },
+  { id: "deep", nameKo: "짙은 갈색", hex: "#2C1608" },
+];
+
+// 기본 피부톤
+export const DEFAULT_SKIN_TONE: SkinTone = "medium";
+
+// SVG 얼굴 파일명 → 얼굴형 매핑
+export const SVG_FACE_FILENAME_TO_SHAPE: Record<string, FaceShape> = {
+  "heart 0.svg": "heart",
+  "oval 0.svg": "oval",
+  "round 0.svg": "round",
+  "round square jaw 0.svg": "round_square_jaw",
+  "square jaw 0.svg": "square_jaw",
+};
+
 // ============================================
 // 이하 SPEC-UPDATE-001에서 추가된 타입
 // ============================================
@@ -134,6 +170,7 @@ export interface BaseCharacter {
   hair: string;
   mustache: string | null;
   glasses: string | null;
+  skinTone: string;
   created_at: string;
   updated_at: string;
 }
@@ -159,6 +196,7 @@ export interface WizardState {
   hair: string | null;
   mustache: string | null;
   glasses: string | null;
+  skinTone: SkinTone;
 }
 
 // 일일 무드 선택 상태

@@ -16,6 +16,7 @@ import type {
   OutfitCategory,
   CharacterCombination,
   DailyMoodState,
+  SkinTone,
 } from "@/app/lib/types";
 import { MOOD_CATEGORIES, OUTFIT_CATEGORIES } from "@/app/lib/types";
 import { getExpressionAssets, getBodyAssets } from "@/app/lib/assetManager";
@@ -159,6 +160,7 @@ function MoodPageContent() {
   useEffect(() => {
     if (!character) return;
 
+    // skinTone을 포함하여 SVG 얼굴에 피부색이 올바르게 적용되도록 한다
     const combination: CharacterCombination = {
       body: moodState.outfitFile ?? "casual_1.png",
       face: character.face,
@@ -166,6 +168,7 @@ function MoodPageContent() {
       mustache: character.mustache,
       hair: character.hair,
       glasses: character.glasses,
+      skinTone: character.skinTone as SkinTone,
     };
 
     setIsPreviewLoading(true);

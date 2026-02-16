@@ -13,6 +13,7 @@ export interface FirestoreCharacter {
   hair: string;
   mustache: string | null;
   glasses: string | null;
+  skinTone: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

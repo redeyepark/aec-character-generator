@@ -12,14 +12,15 @@ import AssetPicker from "@/app/components/AssetPicker";
 import CharacterCanvas from "@/app/components/CharacterCanvas";
 import { useCharacter } from "@/app/hooks/useCharacter";
 import {
-  getFaceAssets,
+  getFaceSvgAssets,
   getHairAssets,
   getCompatibleMustaches,
   getGlassesAssets,
 } from "@/app/lib/assetManager";
 import { compositeCharacter } from "@/app/lib/imageCompositor";
-import type { WizardState, FaceShape, CharacterCombination } from "@/app/lib/types";
-import { FACE_FILENAME_TO_SHAPE } from "@/app/lib/types";
+import SkinTonePicker from "@/app/components/SkinTonePicker";
+import type { WizardState, FaceShape, CharacterCombination, SkinTone } from "@/app/lib/types";
+import { SVG_FACE_FILENAME_TO_SHAPE, DEFAULT_SKIN_TONE } from "@/app/lib/types";
 
 // 위자드 스텝 정보
 const WIZARD_STEPS = [
@@ -39,6 +40,7 @@ function CreatePageContent() {
     hair: null,
     mustache: null,
     glasses: null,
+    skinTone: DEFAULT_SKIN_TONE,
   });
 
   // 미리보기 캔버스
@@ -58,14 +60,14 @@ function CreatePageContent() {
   }, []);
 
   // 에셋 목록
-  const faceAssets = useMemo(() => getFaceAssets(), []);
+  const faceAssets = useMemo(() => getFaceSvgAssets(), []);
   const hairAssets = useMemo(() => getHairAssets(), []);
   const glassesAssets = useMemo(() => getGlassesAssets(), []);
 
   // 선택된 얼굴에 호환되는 수염 목록
   const mustacheAssets = useMemo(() => {
     if (!wizard.face) return [];
-    const faceShape: FaceShape = FACE_FILENAME_TO_SHAPE[wizard.face] ?? "oval";
+    const faceShape: FaceShape = SVG_FACE_FILENAME_TO_SHAPE[wizard.face] ?? "oval";
     return getCompatibleMustaches(faceShape);
   }, [wizard.face]);
 
@@ -85,6 +87,7 @@ function CreatePageContent() {
       mustache: wizard.mustache,
       hair: wizard.hair ?? "hair_1.png",
       glasses: wizard.glasses,
+      skinTone: wizard.skinTone,
     };
 
     // 헤어가 아직 선택되지 않았으면 미리보기 건너뜀 (스텝 1에서는 얼굴만)
@@ -97,6 +100,7 @@ function CreatePageContent() {
         mustache: null,
         hair: "hair_1.png",
         glasses: null,
+        skinTone: wizard.skinTone,
       };
 
       setIsPreviewLoading(true);
@@ -112,7 +116,7 @@ function CreatePageContent() {
       .then(setPreviewCanvas)
       .catch(() => setPreviewCanvas(null))
       .finally(() => setIsPreviewLoading(false));
-  }, [wizard.face, wizard.hair, wizard.mustache, wizard.glasses]);
+  }, [wizard.face, wizard.hair, wizard.mustache, wizard.glasses, wizard.skinTone]);
 
   // 스텝 이동 핸들러
   const goToStep = useCallback((step: 1 | 2 | 3 | 4) => {
@@ -132,6 +136,7 @@ function CreatePageContent() {
         hair: wizard.hair,
         mustache: wizard.mustache,
         glasses: wizard.glasses,
+        skinTone: wizard.skinTone,
       };
 
       const result = await createCharacter(data);
@@ -205,6 +210,13 @@ function CreatePageContent() {
                     // 얼굴 변경 시 호환되지 않는 수염 초기화
                     mustache: null,
                   }))
+                }
+              />
+              {/* 피부색 선택 */}
+              <SkinTonePicker
+                selected={wizard.skinTone}
+                onSelect={(tone: SkinTone) =>
+                  setWizard((prev) => ({ ...prev, skinTone: tone }))
                 }
               />
             </WizardStep>
