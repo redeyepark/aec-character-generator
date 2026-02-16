@@ -7,7 +7,7 @@
 | SPEC ID | SPEC-SKIN-001 |
 | 제목 | SVG Face Skin Color Selection |
 | 생성일 | 2026-02-16 |
-| 상태 | Planned |
+| 상태 | Completed |
 | 우선순위 | Medium |
 | 라이프사이클 | spec-first |
 | 담당 | expert-frontend |
