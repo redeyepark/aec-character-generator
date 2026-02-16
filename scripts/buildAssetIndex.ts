@@ -72,6 +72,21 @@ function readPngFiles(folderName: string): string[] {
 }
 
 /**
+ * 폴더에서 SVG 파일 목록 읽기
+ */
+function readSvgFiles(folderName: string): string[] {
+  const dirPath = path.join(ASSETS_DIR, folderName);
+  if (!fs.existsSync(dirPath)) {
+    console.error(`[오류] 폴더를 찾을 수 없음: ${dirPath}`);
+    return [];
+  }
+  return fs
+    .readdirSync(dirPath)
+    .filter((f) => f.endsWith(".svg"))
+    .sort();
+}
+
+/**
  * 의상(body) 에셋을 카테고리별로 분류
  */
 function classifyBodyAssets(
@@ -174,9 +189,11 @@ function main(): void {
   const mustacheFiles = readPngFiles("mustache");
   const hairFiles = readPngFiles("hair");
   const glassesFiles = readPngFiles("glasses");
+  const faceSvgFiles = readSvgFiles("face-svg");
 
   console.log(`  body: ${bodyFiles.length}개`);
   console.log(`  face: ${faceFiles.length}개`);
+  console.log(`  face-svg: ${faceSvgFiles.length}개`);
   console.log(`  expression: ${expressionFiles.length}개`);
   console.log(`  mustache: ${mustacheFiles.length}개`);
   console.log(`  hair: ${hairFiles.length}개`);
@@ -208,6 +225,7 @@ function main(): void {
   const assetIndex = {
     body: bodyClassified,
     face: faceFiles,
+    "face-svg": faceSvgFiles,
     expression: expressionGroups,
     mustache: mustacheClassified,
     hair: hairFiles,

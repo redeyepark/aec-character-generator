@@ -299,6 +299,13 @@
     "round square jaw 4.png",
     "square jaw 4.png"
   ],
+  "face-svg": [
+    "heart 0.svg",
+    "oval 0.svg",
+    "round 0.svg",
+    "round square jaw 0.svg",
+    "square jaw 0.svg"
+  ],
   "expression": {
     "1": [
       "facial expression11.png",
@@ -634,13 +641,6 @@
     "wave slick back 3.png",
     "wave slick back 4.png",
     "wave slick back 7.png"
-  ],
-  "face-svg": [
-    "heart 0.svg",
-    "oval 0.svg",
-    "round 0.svg",
-    "round square jaw 0.svg",
-    "square jaw 0.svg"
   ],
   "glasses": [
     "aviator brown.png",

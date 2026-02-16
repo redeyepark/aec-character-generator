@@ -9,6 +9,7 @@ import * as path from "path";
 const FOLDER_MAP: Record<string, string> = {
   "01_Body 1": "body",
   "03_Face": "face",
+  "03_Face_SVG": "face-svg",
   "04_Facial_Expression": "expression",
   "05_Mustache": "mustache",
   "07_Hair": "hair",
@@ -30,7 +31,7 @@ function ensureDir(dirPath: string): void {
 }
 
 /**
- * 소스 폴더에서 대상 폴더로 PNG 파일 복사
+ * 소스 폴더에서 대상 폴더로 PNG/SVG 파일 복사
  */
 function copyFolder(sourceName: string, targetName: string): number {
   const srcPath = path.join(SOURCE_DIR, sourceName);
@@ -43,7 +44,7 @@ function copyFolder(sourceName: string, targetName: string): number {
 
   ensureDir(dstPath);
 
-  const files = fs.readdirSync(srcPath).filter((f) => f.endsWith(".png"));
+  const files = fs.readdirSync(srcPath).filter((f) => f.endsWith(".png") || f.endsWith(".svg"));
   let copied = 0;
 
   for (const file of files) {
