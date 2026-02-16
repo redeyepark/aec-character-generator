@@ -7,6 +7,32 @@
 
 ---
 
+## [1.2.0] - 2026-02-16
+
+### SVG 얼굴 피부색 선택 (SPEC-SKIN-001)
+
+#### 추가
+
+- SVG 얼굴 에셋 5종 추가 (`public/assets/face-svg/`, PNG 대비 ~90% 용량 절감)
+- 8종 프리셋 피부색 팔레트 (밝은 살색 ~ 짙은 갈색)
+- `SkinTonePicker` 컴포넌트 (접근성 radiogroup 지원)
+- `svgProcessor.ts` SVG 텍스트 로드/피부색 치환/Canvas Image 변환 유틸리티
+- Firestore `characters` 컬렉션에 `skinTone` 필드 추가
+
+#### 변경
+
+- 캐릭터 생성 위자드 Step 1에 피부색 선택기 통합
+- 얼굴 에셋을 PNG에서 SVG로 전환
+- Canvas 이미지 합성기에 SVG face 렌더링 분기 추가
+- 무드 페이지 및 다이어리 카드에서 저장된 피부색으로 캐릭터 렌더링
+
+#### 호환성
+
+- 기존 캐릭터 데이터(skinTone 필드 없음) 로드 시 기본값 "medium" 자동 적용
+- PNG 얼굴 파일은 삭제하지 않고 유지 (코드에서 비참조)
+
+---
+
 ## [1.1.0] - 2026-02-16
 
 ### Firebase 마이그레이션 및 안정화 (SPEC-FIREBASE-001)

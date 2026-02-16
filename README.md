@@ -12,7 +12,7 @@
 
 4단계 위자드를 통해 베이스 캐릭터를 생성합니다.
 
-1. 얼굴형 선택 (5종: heart, oval, round, round square jaw, square jaw)
+1. 얼굴형 및 피부색 선택 (SVG 얼굴 5종 + 8종 프리셋 피부색 팔레트)
 2. 헤어스타일 선택 (214종)
 3. 수염 선택 (51종, 얼굴형 호환성 자동 필터링)
 4. 안경 선택 (39종)
@@ -30,10 +30,10 @@
 
 ### 6층 레이어 이미지 합성
 
-Canvas API를 사용하여 6개 레이어를 순서대로 합성합니다.
+Canvas API를 사용하여 6개 레이어를 순서대로 합성합니다. 얼굴 레이어는 SVG 에셋을 로드하여 선택된 피부색으로 치환한 뒤 Canvas에 렌더링합니다.
 
 ```
-body(의상) -> face(얼굴) -> expression(표정) -> mustache(수염) -> hair(헤어) -> glasses(안경)
+body(의상) -> face(SVG 얼굴 + 피부색) -> expression(표정) -> mustache(수염) -> hair(헤어) -> glasses(안경)
 ```
 
 ### 무드 다이어리
@@ -200,6 +200,7 @@ AEC_today01/
 │   │   ├── MoodSelector.tsx       # 기분 카테고리 선택기
 │   │   ├── NavBar.tsx             # 내비게이션 바
 │   │   ├── OutfitSelector.tsx     # 의상 카테고리 선택기
+│   │   ├── SkinTonePicker.tsx     # 피부색 프리셋 선택기 (8종)
 │   │   └── WizardStep.tsx         # 위자드 단계 래퍼
 │   ├── contexts/
 │   │   └── AuthContext.tsx        # 인증 상태 Context Provider
@@ -210,12 +211,15 @@ AEC_today01/
 │   ├── lib/
 │   │   ├── assetManager.ts        # 에셋 로딩/인덱싱/분류
 │   │   ├── firebase.ts             # Firebase 앱 초기화 및 서비스 내보내기
+│   │   ├── firestore.types.ts     # Firestore 컬렉션 타입 정의
 │   │   ├── imageCompositor.ts     # Canvas 6층 레이어 이미지 합성
 │   │   ├── randomEngine.ts        # 랜덤 조합 알고리즘
+│   │   ├── svgProcessor.ts        # SVG 로드/피부색 치환/Canvas Image 변환
 │   │   └── types.ts               # TypeScript 타입 정의
 │   └── data/
 │       └── assetIndex.json        # 사전 빌드된 에셋 인덱스
 ├── public/assets/                 # 정적 에셋 서빙 디렉토리
+│   └── face-svg/                  # SVG 얼굴 에셋 5종 (피부색 치환용)
 ├── scripts/
 │   ├── copyAssets.ts              # _AEC 에셋 복사 스크립트
 │   └── buildAssetIndex.ts         # 에셋 인덱스 JSON 빌드 스크립트
@@ -236,7 +240,7 @@ Cloud Firestore에 3개의 컬렉션을 사용하며, Firestore 보안 규칙이
 | 컬렉션 | 용도 | 제약조건 |
 |--------|------|----------|
 | `profiles` | 사용자 프로필 (display_name) | 사용자당 1개 |
-| `characters` | 베이스 캐릭터 (face, hair, mustache, glasses) | 사용자당 1개 |
+| `characters` | 베이스 캐릭터 (face, hair, mustache, glasses, skinTone) | 사용자당 1개 |
 | `mood_entries` | 일일 무드 기록 (mood_category, outfit_file, expression_file) | 사용자당 하루 1개 |
 
 ---
