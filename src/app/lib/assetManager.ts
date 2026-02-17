@@ -89,6 +89,24 @@ export function getHandItemAssets(): string[] {
 }
 
 /**
+ * 해금된 착용 소품(body item) 에셋 목록 반환
+ * count 개수만큼만 잘라서 반환한다 (assetIndex.json은 알파벳순 정렬).
+ */
+export function getUnlockedBodyItemAssets(count: number): string[] {
+  const all = index["body-item"] || [];
+  return all.slice(0, Math.min(count, all.length));
+}
+
+/**
+ * 해금된 손 아이템(hand item) 에셋 목록 반환
+ * count 개수만큼만 잘라서 반환한다 (assetIndex.json은 알파벳순 정렬).
+ */
+export function getUnlockedHandItemAssets(count: number): string[] {
+  const all = index["hand-item"] || [];
+  return all.slice(0, Math.min(count, all.length));
+}
+
+/**
  * SVG 얼굴 에셋 목록 반환 (5종)
  * assetIndex.json의 "face-svg" 키에서 파일명 배열을 가져온다.
  */

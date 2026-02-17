@@ -24,8 +24,8 @@ import type {
   SkinTone,
   UnlockedReward,
 } from "@/app/lib/types";
-import { MOOD_CATEGORIES, OUTFIT_CATEGORIES } from "@/app/lib/types";
-import { getExpressionAssets, getBodyAssets, getBodyItemAssets, getHandItemAssets } from "@/app/lib/assetManager";
+import { MOOD_CATEGORIES, OUTFIT_CATEGORIES, ITEM_UNLOCK_TIERS } from "@/app/lib/types";
+import { getExpressionAssets, getBodyAssets, getUnlockedBodyItemAssets, getUnlockedHandItemAssets } from "@/app/lib/assetManager";
 
 // 기분별 이모티콘 매핑
 const MOOD_ICONS: Record<MoodCategory, string> = {
@@ -85,7 +85,7 @@ function MoodPageContent() {
 
   // 출석 및 보상 훅
   const { recordAttendance } = useAttendance();
-  const { checkAndUnlockReward } = useRewards();
+  const { fetchRewards, checkAndUnlockReward, checkAndUnlockItemRewards, getUnlockedItemCounts } = useRewards();
 
   // 출석 토스트 상태
   const [toastData, setToastData] = useState<{
@@ -139,7 +139,7 @@ function MoodPageContent() {
     []
   );
 
-  // 초기 로드: 캐릭터 + 오늘의 무드 항목
+  // 초기 로드: 캐릭터 + 오늘의 무드 항목 + 보상 데이터
   useEffect(() => {
     async function init() {
       setIsInitialLoading(true);
@@ -150,11 +150,19 @@ function MoodPageContent() {
         return;
       }
 
-      // 착용 소품 / 손 아이템 랜덤 선택 (매번 새로 생성)
-      const bodyItems = getBodyItemAssets();
-      if (bodyItems.length > 0) setBodyItemFile(pickRandom(bodyItems));
-      const handItems = getHandItemAssets();
-      if (handItems.length > 0) setHandItemFile(pickRandom(handItems));
+      // 보상 데이터 로드 후 해금된 아이템 개수 확인
+      await fetchRewards();
+      const { bodyItemCount, handItemCount } = getUnlockedItemCounts();
+
+      // 착용 소품 / 손 아이템: 해금된 아이템에서만 랜덤 선택
+      if (bodyItemCount > 0) {
+        const bodyItems = getUnlockedBodyItemAssets(bodyItemCount);
+        if (bodyItems.length > 0) setBodyItemFile(pickRandom(bodyItems));
+      }
+      if (handItemCount > 0) {
+        const handItems = getUnlockedHandItemAssets(handItemCount);
+        if (handItems.length > 0) setHandItemFile(pickRandom(handItems));
+      }
 
       // 오늘의 무드 항목이 이미 있으면 로드
       const todayEntry = await fetchTodayEntry();
@@ -271,17 +279,21 @@ function MoodPageContent() {
     }));
   }, [moodState.outfitCategory, pickRandomOutfit]);
 
-  // 착용 소품 다시 뽑기
+  // 착용 소품 다시 뽑기 (해금된 아이템에서만)
   const handleRerollBodyItem = useCallback(() => {
-    const items = getBodyItemAssets();
+    const { bodyItemCount } = getUnlockedItemCounts();
+    if (bodyItemCount <= 0) return;
+    const items = getUnlockedBodyItemAssets(bodyItemCount);
     if (items.length > 0) setBodyItemFile(pickRandom(items));
-  }, []);
+  }, [getUnlockedItemCounts]);
 
-  // 손 아이템 다시 뽑기
+  // 손 아이템 다시 뽑기 (해금된 아이템에서만)
   const handleRerollHandItem = useCallback(() => {
-    const items = getHandItemAssets();
+    const { handItemCount } = getUnlockedItemCounts();
+    if (handItemCount <= 0) return;
+    const items = getUnlockedHandItemAssets(handItemCount);
     if (items.length > 0) setHandItemFile(pickRandom(items));
-  }, []);
+  }, [getUnlockedItemCounts]);
 
   // 저장 가능 여부
   const canSave =
@@ -326,6 +338,16 @@ function MoodPageContent() {
             );
           }
 
+          // 출석 스트릭 기반 아이템 해금 처리 (마일스톤과 별개로 항상 확인)
+          if (attendanceResult.isNewAttendance) {
+            const now = new Date();
+            const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+            await checkAndUnlockItemRewards(
+              attendanceResult.currentStreak,
+              yearMonth
+            );
+          }
+
           setToastData({
             show: true,
             streak: attendanceResult.currentStreak,
@@ -341,7 +363,7 @@ function MoodPageContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [character, canSave, moodState, upsertEntry, recordAttendance, checkAndUnlockReward]);
+  }, [character, canSave, moodState, upsertEntry, recordAttendance, checkAndUnlockReward, checkAndUnlockItemRewards]);
 
   // 토스트 닫기 핸들러
   const handleToastClose = useCallback(() => {
@@ -555,33 +577,37 @@ function MoodPageContent() {
                 </button>
               )}
 
-              {/* 착용 소품 다시 뽑기 */}
-              <button
-                type="button"
-                onClick={handleRerollBodyItem}
-                aria-label="착용 소품 다시 뽑기"
-                className="w-full py-2 text-sm font-medium rounded-lg
-                           border border-purple-300 text-purple-600 bg-purple-50
-                           hover:bg-purple-100 active:bg-purple-200
-                           transition-all duration-150 cursor-pointer
-                           focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1"
-              >
-                착용 소품 다시 뽑기
-              </button>
+              {/* 착용 소품 다시 뽑기 (해금된 경우에만 표시) */}
+              {getUnlockedItemCounts().bodyItemCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleRerollBodyItem}
+                  aria-label="착용 소품 다시 뽑기"
+                  className="w-full py-2 text-sm font-medium rounded-lg
+                             border border-purple-300 text-purple-600 bg-purple-50
+                             hover:bg-purple-100 active:bg-purple-200
+                             transition-all duration-150 cursor-pointer
+                             focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1"
+                >
+                  착용 소품 다시 뽑기
+                </button>
+              )}
 
-              {/* 손 아이템 다시 뽑기 */}
-              <button
-                type="button"
-                onClick={handleRerollHandItem}
-                aria-label="손 아이템 다시 뽑기"
-                className="w-full py-2 text-sm font-medium rounded-lg
-                           border border-amber-300 text-amber-600 bg-amber-50
-                           hover:bg-amber-100 active:bg-amber-200
-                           transition-all duration-150 cursor-pointer
-                           focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1"
-              >
-                손 아이템 다시 뽑기
-              </button>
+              {/* 손 아이템 다시 뽑기 (해금된 경우에만 표시) */}
+              {getUnlockedItemCounts().handItemCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleRerollHandItem}
+                  aria-label="손 아이템 다시 뽑기"
+                  className="w-full py-2 text-sm font-medium rounded-lg
+                             border border-amber-300 text-amber-600 bg-amber-50
+                             hover:bg-amber-100 active:bg-amber-200
+                             transition-all duration-150 cursor-pointer
+                             focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1"
+                >
+                  손 아이템 다시 뽑기
+                </button>
+              )}
             </div>
           </details>
 

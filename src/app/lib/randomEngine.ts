@@ -11,13 +11,13 @@ import type {
 import { FACE_FILENAME_TO_SHAPE } from "./types";
 import {
   getBodyAssets,
-  getBodyItemAssets,
   getCompatibleMustaches,
   getExpressionAssets,
   getFaceAssets,
   getGlassesAssets,
   getHairAssets,
-  getHandItemAssets,
+  getUnlockedBodyItemAssets,
+  getUnlockedHandItemAssets,
 } from "./assetManager";
 
 /**
@@ -45,17 +45,17 @@ function getFaceShapeFromFilename(filename: string): FaceShape {
  * 4. Mustache: 얼굴형 호환 수염 중 무작위 (30% 확률로 없음)
  * 5. Hair: 전체 214종 중 무작위
  * 6. Glasses: 전체 39종 중 무작위 (30% 확률로 없음)
+ * 7. BodyItem: 해금된 아이템에서만 선택 (미해금 시 null)
+ * 8. HandItem: 해금된 아이템에서만 선택 (미해금 시 null)
  */
 export function generateCharacter(
   mood: MoodCategory,
-  outfit: OutfitCategory
+  outfit: OutfitCategory,
+  itemUnlocks?: { bodyItemCount: number; handItemCount: number }
 ): CharacterCombination {
   // 1. Body 선택
   const bodyAssets = getBodyAssets(outfit);
   const body = pickRandom(bodyAssets);
-
-  // 1-1. BodyItem 선택 (항상 랜덤, null 없음)
-  const bodyItem = pickRandom(getBodyItemAssets());
 
   // 2. Face 선택
   const faceAssets = getFaceAssets();
@@ -86,8 +86,23 @@ export function generateCharacter(
     glasses = pickRandom(glassesAssets);
   }
 
-  // 7. HandItem 선택 (항상 랜덤, null 없음)
-  const handItem = pickRandom(getHandItemAssets());
+  // 7. BodyItem 선택 (해금된 아이템에서만)
+  let bodyItem: string | null = null;
+  if (itemUnlocks && itemUnlocks.bodyItemCount > 0) {
+    const bodyItemAssets = getUnlockedBodyItemAssets(itemUnlocks.bodyItemCount);
+    if (bodyItemAssets.length > 0) {
+      bodyItem = pickRandom(bodyItemAssets);
+    }
+  }
+
+  // 8. HandItem 선택 (해금된 아이템에서만)
+  let handItem: string | null = null;
+  if (itemUnlocks && itemUnlocks.handItemCount > 0) {
+    const handItemAssets = getUnlockedHandItemAssets(itemUnlocks.handItemCount);
+    if (handItemAssets.length > 0) {
+      handItem = pickRandom(handItemAssets);
+    }
+  }
 
   return { body, bodyItem, face, expression, mustache, hair, glasses, handItem };
 }

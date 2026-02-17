@@ -5,11 +5,10 @@
  * 선택된 날짜의 무드 항목 상세 정보를 표시한다.
  * 캐릭터 미리보기와 다운로드 기능을 포함한다.
  */
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { MoodEntry, BaseCharacter, CharacterCombination, SkinTone } from "@/app/lib/types";
 import { MOOD_CATEGORIES } from "@/app/lib/types";
 import { compositeCharacter, downloadAsPNG } from "@/app/lib/imageCompositor";
-import { getBodyItemAssets, getHandItemAssets } from "@/app/lib/assetManager";
 import CharacterCanvas from "./CharacterCanvas";
 
 interface DiaryEntryCardProps {
@@ -34,16 +33,6 @@ export default function DiaryEntryCard({ entry, character }: DiaryEntryCardProps
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 착용 소품 / 손 아이템은 DB에 저장되지 않으므로 매번 랜덤 생성
-  const randomBodyItem = useMemo(() => {
-    const items = getBodyItemAssets();
-    return items.length > 0 ? items[Math.floor(Math.random() * items.length)] : null;
-  }, []);
-  const randomHandItem = useMemo(() => {
-    const items = getHandItemAssets();
-    return items.length > 0 ? items[Math.floor(Math.random() * items.length)] : null;
-  }, []);
-
   // 기분 카테고리 한글명
   const moodInfo = MOOD_CATEGORIES.find((m) => m.id === entry.mood_category);
   const moodNameKo = moodInfo?.nameKo ?? entry.mood_category;
@@ -54,18 +43,18 @@ export default function DiaryEntryCard({ entry, character }: DiaryEntryCardProps
     return `${parts[0]}년 ${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
   })();
 
-  // 캐릭터 합성
+  // 캐릭터 합성 (착용 소품/손 아이템은 DB에 저장되지 않으므로 null 처리)
   useEffect(() => {
     // skinTone을 포함하여 SVG 얼굴에 피부색이 올바르게 적용되도록 한다
     const combination: CharacterCombination = {
       body: entry.outfit_file,
-      bodyItem: randomBodyItem,
+      bodyItem: null,
       face: character.face,
       expression: entry.expression_file,
       mustache: character.mustache,
       hair: character.hair,
       glasses: character.glasses,
-      handItem: randomHandItem,
+      handItem: null,
       skinTone: character.skinTone as SkinTone,
     };
 
@@ -74,7 +63,7 @@ export default function DiaryEntryCard({ entry, character }: DiaryEntryCardProps
       .then(setCanvas)
       .catch(() => setCanvas(null))
       .finally(() => setIsLoading(false));
-  }, [entry, character, randomBodyItem, randomHandItem]);
+  }, [entry, character]);
 
   // 다운로드 핸들러
   const handleDownload = useCallback(() => {

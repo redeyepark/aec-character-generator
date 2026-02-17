@@ -251,7 +251,7 @@ export interface RewardData {
 /** 개별 해금 보상 */
 export interface UnlockedReward {
   milestone: number;
-  rewardType: "expression" | "outfit" | "outfit_set";
+  rewardType: "expression" | "outfit" | "outfit_set" | "body_item" | "hand_item";
   rewardFiles: string[];
   unlockedAt: Date;
   unlockedMonth: string;
@@ -263,7 +263,24 @@ export interface MilestoneConfig {
   rewardType: "expression" | "outfit" | "outfit_set";
   rewardFiles: string[];
   label: string;
+  rewardCount?: number;
 }
+
+/** 아이템 해금 티어 설정 */
+export interface ItemUnlockTier {
+  streakDays: number;
+  bodyItemCount: number; // 누적 해금 개수
+  handItemCount: number; // 누적 해금 개수
+  label: string;
+}
+
+/** 출석 스트릭 기반 아이템 해금 티어 매핑 */
+export const ITEM_UNLOCK_TIERS: ItemUnlockTier[] = [
+  { streakDays: 3, bodyItemCount: 15, handItemCount: 0, label: "3일 연속" },
+  { streakDays: 7, bodyItemCount: 60, handItemCount: 30, label: "7일 연속" },
+  { streakDays: 14, bodyItemCount: 60, handItemCount: 86, label: "14일 연속" },
+  { streakDays: 30, bodyItemCount: 60, handItemCount: 116, label: "30일 연속" },
+];
 
 /** 마일스톤 매핑 테이블 */
 export const MILESTONES: MilestoneConfig[] = [
