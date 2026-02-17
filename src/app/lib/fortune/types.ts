@@ -61,7 +61,8 @@ export interface BirthInfo {
   birthYear: number;
   birthMonth: number;
   birthDay: number;
-  birthHour?: number;
+  birthHour?: number; // 하위 호환용 (UI에서 더 이상 수집하지 않음)
+  isLunar?: boolean; // true = 음력, false/undefined = 양력
 }
 
 // 의상 색상 매칭 결과

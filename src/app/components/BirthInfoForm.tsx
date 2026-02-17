@@ -2,26 +2,10 @@
 
 /**
  * 사주 정보 입력 폼
- * 출생 연/월/일/시를 입력받아 저장한다.
+ * 음력/양력 선택과 출생 연/월/일을 입력받아 저장한다.
  */
 import { useState, useCallback } from "react";
 import type { BirthInfo } from "@/app/lib/fortune/types";
-
-// 12지지 시간대 옵션
-const BIRTH_HOUR_OPTIONS: { value: number; label: string }[] = [
-  { value: 0, label: "자시 (23:00~01:00)" },
-  { value: 1, label: "축시 (01:00~03:00)" },
-  { value: 2, label: "인시 (03:00~05:00)" },
-  { value: 3, label: "묘시 (05:00~07:00)" },
-  { value: 4, label: "진시 (07:00~09:00)" },
-  { value: 5, label: "사시 (09:00~11:00)" },
-  { value: 6, label: "오시 (11:00~13:00)" },
-  { value: 7, label: "미시 (13:00~15:00)" },
-  { value: 8, label: "신시 (15:00~17:00)" },
-  { value: 9, label: "유시 (17:00~19:00)" },
-  { value: 10, label: "술시 (19:00~21:00)" },
-  { value: 11, label: "해시 (21:00~23:00)" },
-];
 
 interface BirthInfoFormProps {
   initialBirthInfo?: BirthInfo | null;
@@ -58,10 +42,8 @@ export default function BirthInfoForm({
   const [day, setDay] = useState<string>(
     initialBirthInfo?.birthDay?.toString() ?? ""
   );
-  const [hour, setHour] = useState<string>(
-    initialBirthInfo?.birthHour !== undefined
-      ? initialBirthInfo.birthHour.toString()
-      : ""
+  const [isLunar, setIsLunar] = useState<boolean>(
+    initialBirthInfo?.isLunar ?? false
   );
 
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +92,7 @@ export default function BirthInfoForm({
         birthYear: yearNum,
         birthMonth: monthNum,
         birthDay: dayNum,
-        ...(hour !== "" ? { birthHour: parseInt(hour, 10) } : {}),
+        isLunar,
       };
 
       setIsSaving(true);
@@ -128,7 +110,7 @@ export default function BirthInfoForm({
         setIsSaving(false);
       }
     },
-    [year, month, day, hour, currentYear, onSave]
+    [year, month, day, isLunar, currentYear, onSave]
   );
 
   const inputBaseClass =
@@ -138,6 +120,44 @@ export default function BirthInfoForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* 음력/양력 선택 */}
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          달력 종류
+        </label>
+        <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsLunar(false)}
+            className={`flex-1 py-2 text-sm font-medium transition-colors duration-150
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset
+                       ${
+                         !isLunar
+                           ? "bg-blue-600 text-white"
+                           : "bg-white text-gray-600 hover:bg-gray-50"
+                       }`}
+            aria-pressed={!isLunar}
+          >
+            양력
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsLunar(true)}
+            className={`flex-1 py-2 text-sm font-medium transition-colors duration-150
+                       border-l border-gray-300
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset
+                       ${
+                         isLunar
+                           ? "bg-blue-600 text-white"
+                           : "bg-white text-gray-600 hover:bg-gray-50"
+                       }`}
+            aria-pressed={isLunar}
+          >
+            음력
+          </button>
+        </div>
+      </div>
+
       {/* 연/월/일 입력 */}
       <div className="grid grid-cols-3 gap-3">
         <div>
@@ -200,30 +220,6 @@ export default function BirthInfoForm({
             required
           />
         </div>
-      </div>
-
-      {/* 시간 선택 (선택사항) */}
-      <div>
-        <label
-          htmlFor="birth-hour"
-          className="block text-xs font-medium text-gray-600 mb-1"
-        >
-          출생 시간 (선택사항)
-        </label>
-        <select
-          id="birth-hour"
-          value={hour}
-          onChange={(e) => setHour(e.target.value)}
-          className={inputBaseClass}
-          aria-label="출생 시간"
-        >
-          <option value="">모름 / 입력하지 않음</option>
-          {BIRTH_HOUR_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* 에러 메시지 */}

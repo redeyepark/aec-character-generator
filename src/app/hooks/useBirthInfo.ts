@@ -62,6 +62,9 @@ export function useBirthInfo(): UseBirthInfoReturn {
         ...(data.birthHour !== undefined && data.birthHour !== null
           ? { birthHour: data.birthHour }
           : {}),
+        ...(data.isLunar !== undefined && data.isLunar !== null
+          ? { isLunar: data.isLunar }
+          : {}),
       };
 
       setBirthInfo(info);
@@ -98,6 +101,9 @@ export function useBirthInfo(): UseBirthInfoReturn {
           birthDay: info.birthDay,
           ...(info.birthHour !== undefined
             ? { birthHour: info.birthHour }
+            : {}),
+          ...(info.isLunar !== undefined
+            ? { isLunar: info.isLunar }
             : {}),
         }, { merge: true });
 
