@@ -18,7 +18,7 @@ import type { MoodEntry } from "@/app/lib/types";
 function DiaryPageContent() {
   const { character, fetchCharacter } = useCharacter();
   const { fetchEntriesByMonth, loading, error } = useMoodEntries();
-  const { attendance, fetchAttendance, loading: attendanceLoading } = useAttendance();
+  const { attendance, fetchAttendance, loading: attendanceLoading, error: attendanceError } = useAttendance();
   const { rewards, fetchRewards } = useRewards();
 
   // 현재 표시 중인 연/월
@@ -44,13 +44,21 @@ function DiaryPageContent() {
         window.location.href = "/create/";
         return;
       }
-      // 출석 및 보상 데이터 병렬 조회
-      await Promise.all([fetchAttendance(), fetchRewards()]);
+      // 보상 데이터 조회 (출석은 월 변경 useEffect에서 처리)
+      await fetchRewards();
       setIsInitialLoading(false);
     }
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 월 변경 시 출석 데이터 재조회
+  useEffect(() => {
+    if (isInitialLoading) return;
+    const ym = `${viewYear}-${String(viewMonth).padStart(2, "0")}`;
+    fetchAttendance(ym);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewYear, viewMonth, isInitialLoading]);
 
   // 월별 항목 로드
   useEffect(() => {
@@ -168,6 +176,9 @@ function DiaryPageContent() {
               attendance={attendance}
               loading={attendanceLoading}
               unlockedMilestones={unlockedMilestones}
+              viewYear={viewYear}
+              viewMonth={viewMonth}
+              error={attendanceError}
             />
           </div>
         </div>

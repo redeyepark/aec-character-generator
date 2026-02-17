@@ -15,13 +15,28 @@ interface AttendanceCardProps {
   loading: boolean;
   /** 해금된 마일스톤 일수 배열 (선택적) */
   unlockedMilestones?: number[];
+  /** 현재 보고 있는 연도 (선택적) */
+  viewYear?: number;
+  /** 현재 보고 있는 월 (선택적) */
+  viewMonth?: number;
+  /** 에러 메시지 (선택적) */
+  error?: string | null;
 }
 
 export default function AttendanceCard({
   attendance,
   loading,
   unlockedMilestones = [],
+  viewYear,
+  viewMonth,
+  error,
 }: AttendanceCardProps) {
+  // 카드 제목: viewYear/viewMonth가 있으면 해당 월 표시, 없으면 기본값
+  const cardTitle =
+    viewYear && viewMonth
+      ? `${viewYear}년 ${viewMonth}월 출석 현황`
+      : "이번 달 출석 현황";
+
   // 로딩 상태: 스켈레톤 UI
   if (loading) {
     return (
@@ -43,12 +58,32 @@ export default function AttendanceCard({
     );
   }
 
+  // 에러 상태: 출석 데이터 조회 실패
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+          {cardTitle}
+        </h3>
+        <div
+          role="alert"
+          className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"
+        >
+          <p>{error}</p>
+          <p className="mt-1 text-xs text-red-500">
+            페이지를 새로고침하거나 다시 시도해 주세요.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // 빈 상태: 출석 기록 없음
   if (!attendance || attendance.totalDays === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-2">
-          이번 달 출석 현황
+          {cardTitle}
         </h3>
         <p className="text-sm text-gray-400">
           아직 출석 기록이 없습니다
@@ -60,10 +95,10 @@ export default function AttendanceCard({
   return (
     <div
       className="bg-white rounded-xl border border-gray-200 shadow-sm p-4"
-      aria-label="이번 달 출석 현황"
+      aria-label={cardTitle}
     >
       <h3 className="text-sm font-semibold text-gray-700 mb-3">
-        이번 달 출석 현황
+        {cardTitle}
       </h3>
 
       {/* 통계 항목 3개 (가로 배치) */}

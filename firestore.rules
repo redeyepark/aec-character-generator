@@ -37,8 +37,10 @@ service cloud.firestore {
     }
 
     // attendance: 본인 출석 기록만 읽기/생성/수정 (삭제 불가)
+    // resource == null: 문서가 존재하지 않을 때 getDoc()이 exists=false를 반환할 수 있도록 허용
     match /attendance/{docId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null
+                  && (resource == null || resource.data.userId == request.auth.uid);
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       allow delete: if false;
