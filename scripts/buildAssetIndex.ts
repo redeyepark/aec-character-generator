@@ -190,6 +190,8 @@ function main(): void {
   const hairFiles = readPngFiles("hair");
   const glassesFiles = readPngFiles("glasses");
   const faceSvgFiles = readSvgFiles("face-svg");
+  const bodyItemFiles = readPngFiles("body-item");
+  const handItemFiles = readPngFiles("hand-item");
 
   console.log(`  body: ${bodyFiles.length}개`);
   console.log(`  face: ${faceFiles.length}개`);
@@ -198,6 +200,8 @@ function main(): void {
   console.log(`  mustache: ${mustacheFiles.length}개`);
   console.log(`  hair: ${hairFiles.length}개`);
   console.log(`  glasses: ${glassesFiles.length}개`);
+  console.log(`  body-item: ${bodyItemFiles.length}개`);
+  console.log(`  hand-item: ${handItemFiles.length}개`);
 
   // 분류 수행
   const bodyClassified = classifyBodyAssets(bodyFiles);
@@ -230,6 +234,8 @@ function main(): void {
     mustache: mustacheClassified,
     hair: hairFiles,
     glasses: glassesFiles,
+    "body-item": bodyItemFiles,
+    "hand-item": handItemFiles,
   };
 
   // 출력 디렉토리 확인 후 JSON 저장

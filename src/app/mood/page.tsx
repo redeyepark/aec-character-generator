@@ -25,7 +25,7 @@ import type {
   UnlockedReward,
 } from "@/app/lib/types";
 import { MOOD_CATEGORIES, OUTFIT_CATEGORIES } from "@/app/lib/types";
-import { getExpressionAssets, getBodyAssets } from "@/app/lib/assetManager";
+import { getExpressionAssets, getBodyAssets, getBodyItemAssets, getHandItemAssets } from "@/app/lib/assetManager";
 
 // 기분별 이모티콘 매핑
 const MOOD_ICONS: Record<MoodCategory, string> = {
@@ -103,6 +103,10 @@ function MoodPageContent() {
     outfitFile: null,
   });
 
+  // 착용 소품 / 손 아이템 상태 (DB에 저장하지 않고 매번 랜덤 생성)
+  const [bodyItemFile, setBodyItemFile] = useState<string | null>(null);
+  const [handItemFile, setHandItemFile] = useState<string | null>(null);
+
   // 미리보기 관련 상태
   const [previewCanvas, setPreviewCanvas] =
     useState<HTMLCanvasElement | null>(null);
@@ -146,6 +150,12 @@ function MoodPageContent() {
         return;
       }
 
+      // 착용 소품 / 손 아이템 랜덤 선택 (매번 새로 생성)
+      const bodyItems = getBodyItemAssets();
+      if (bodyItems.length > 0) setBodyItemFile(pickRandom(bodyItems));
+      const handItems = getHandItemAssets();
+      if (handItems.length > 0) setHandItemFile(pickRandom(handItems));
+
       // 오늘의 무드 항목이 이미 있으면 로드
       const todayEntry = await fetchTodayEntry();
       if (todayEntry) {
@@ -187,11 +197,13 @@ function MoodPageContent() {
     // skinTone을 포함하여 SVG 얼굴에 피부색이 올바르게 적용되도록 한다
     const combination: CharacterCombination = {
       body: moodState.outfitFile ?? "casual_1.png",
+      bodyItem: bodyItemFile,
       face: character.face,
       expression: moodState.expressionFile ?? "1_1.png",
       mustache: character.mustache,
       hair: character.hair,
       glasses: character.glasses,
+      handItem: handItemFile,
       skinTone: character.skinTone as SkinTone,
     };
 
@@ -200,7 +212,7 @@ function MoodPageContent() {
       .then(setPreviewCanvas)
       .catch(() => setPreviewCanvas(null))
       .finally(() => setIsPreviewLoading(false));
-  }, [character, moodState.outfitFile, moodState.expressionFile]);
+  }, [character, moodState.outfitFile, moodState.expressionFile, bodyItemFile, handItemFile]);
 
   // 운세 로드 완료 시 행운 의상 자동 적용 (신규 기록일 때만)
   useEffect(() => {
@@ -258,6 +270,18 @@ function MoodPageContent() {
       outfitFile: randomOutfit,
     }));
   }, [moodState.outfitCategory, pickRandomOutfit]);
+
+  // 착용 소품 다시 뽑기
+  const handleRerollBodyItem = useCallback(() => {
+    const items = getBodyItemAssets();
+    if (items.length > 0) setBodyItemFile(pickRandom(items));
+  }, []);
+
+  // 손 아이템 다시 뽑기
+  const handleRerollHandItem = useCallback(() => {
+    const items = getHandItemAssets();
+    if (items.length > 0) setHandItemFile(pickRandom(items));
+  }, []);
 
   // 저장 가능 여부
   const canSave =
@@ -530,6 +554,34 @@ function MoodPageContent() {
                   표정 다시 뽑기
                 </button>
               )}
+
+              {/* 착용 소품 다시 뽑기 */}
+              <button
+                type="button"
+                onClick={handleRerollBodyItem}
+                aria-label="착용 소품 다시 뽑기"
+                className="w-full py-2 text-sm font-medium rounded-lg
+                           border border-purple-300 text-purple-600 bg-purple-50
+                           hover:bg-purple-100 active:bg-purple-200
+                           transition-all duration-150 cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1"
+              >
+                착용 소품 다시 뽑기
+              </button>
+
+              {/* 손 아이템 다시 뽑기 */}
+              <button
+                type="button"
+                onClick={handleRerollHandItem}
+                aria-label="손 아이템 다시 뽑기"
+                className="w-full py-2 text-sm font-medium rounded-lg
+                           border border-amber-300 text-amber-600 bg-amber-50
+                           hover:bg-amber-100 active:bg-amber-200
+                           transition-all duration-150 cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1"
+              >
+                손 아이템 다시 뽑기
+              </button>
             </div>
           </details>
 

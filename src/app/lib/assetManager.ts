@@ -75,6 +75,20 @@ export function getGlassesAssets(): string[] {
 }
 
 /**
+ * 착용 소품(body item) 에셋 목록 반환 (힙색, 망토, 가디건 등)
+ */
+export function getBodyItemAssets(): string[] {
+  return index["body-item"] || [];
+}
+
+/**
+ * 손 아이템(hand item) 에셋 목록 반환 (음료, 꽃, 운동기구 등)
+ */
+export function getHandItemAssets(): string[] {
+  return index["hand-item"] || [];
+}
+
+/**
  * SVG 얼굴 에셋 목록 반환 (5종)
  * assetIndex.json의 "face-svg" 키에서 파일명 배열을 가져온다.
  */
@@ -99,6 +113,13 @@ export function getAssetPath(layer: LayerType, filename: string): string {
   // SVG 얼굴 파일은 face-svg 디렉토리에서 제공
   if (layer === "face" && filename.endsWith(".svg")) {
     return `/assets/face-svg/${encodeURIComponent(filename)}`;
+  }
+  // bodyItem → body-item 디렉토리, handItem → hand-item 디렉토리
+  if (layer === "bodyItem") {
+    return `/assets/body-item/${encodeURIComponent(filename)}`;
+  }
+  if (layer === "handItem") {
+    return `/assets/hand-item/${encodeURIComponent(filename)}`;
   }
   return `/assets/${layer}/${encodeURIComponent(filename)}`;
 }

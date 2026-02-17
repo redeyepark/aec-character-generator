@@ -120,11 +120,13 @@ function CreatePageContent() {
     // 미리보기용 더미 조합 (선택되지 않은 레이어는 기본값 사용)
     const previewCombination: CharacterCombination = {
       body: "casual_1.png", // 미리보기용 기본 의상
+      bodyItem: null, // 위자드에서는 사용하지 않음
       face: wizard.face,
       expression: "1_1.png", // 미리보기용 기본 표정
       mustache: wizard.mustache,
       hair: wizard.hair ?? "hair_1.png",
       glasses: wizard.glasses,
+      handItem: null, // 위자드에서는 사용하지 않음
       skinTone: wizard.skinTone,
     };
 
@@ -133,11 +135,13 @@ function CreatePageContent() {
       // 헤어 없이 간단 미리보기
       const simpleCombination: CharacterCombination = {
         body: "casual_1.png",
+        bodyItem: null, // 위자드에서는 사용하지 않음
         face: wizard.face,
         expression: "1_1.png",
         mustache: null,
         hair: "hair_1.png",
         glasses: null,
+        handItem: null, // 위자드에서는 사용하지 않음
         skinTone: wizard.skinTone,
       };
 

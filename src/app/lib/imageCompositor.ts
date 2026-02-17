@@ -58,11 +58,13 @@ interface LayerEntry {
 function buildLayerList(combination: CharacterCombination): LayerEntry[] {
   return [
     { type: "body", filename: combination.body },
+    { type: "bodyItem", filename: combination.bodyItem },
     { type: "face", filename: combination.face },
     { type: "expression", filename: combination.expression },
     { type: "mustache", filename: combination.mustache },
     { type: "hair", filename: combination.hair },
     { type: "glasses", filename: combination.glasses },
+    { type: "handItem", filename: combination.handItem },
   ];
 }
 

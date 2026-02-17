@@ -28,20 +28,24 @@ export type FaceShape =
 // 에셋 레이어 종류
 export type LayerType =
   | "body"
+  | "bodyItem"
   | "face"
   | "expression"
   | "mustache"
   | "hair"
-  | "glasses";
+  | "glasses"
+  | "handItem";
 
 // 캐릭터 조합 (각 레이어별 선택된 파일명)
 export interface CharacterCombination {
   body: string;
+  bodyItem: string | null; // 착용 소품 (힙색, 망토, 가디건 등)
   face: string;
   expression: string;
   mustache: string | null; // null = 수염 없음
   hair: string;
   glasses: string | null; // null = 안경 없음
+  handItem: string | null; // 손 아이템 (음료, 꽃, 운동기구 등)
   skinTone?: SkinTone;
 }
 
@@ -60,6 +64,8 @@ export interface AssetIndex {
   };
   hair: string[];
   glasses: string[];
+  "body-item"?: string[]; // 착용 소품 (힙색, 망토 등)
+  "hand-item"?: string[]; // 손 아이템 (음료, 꽃 등)
 }
 
 // 기분 카테고리 정보

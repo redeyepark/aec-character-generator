@@ -1,6 +1,6 @@
 # AEC Character Generator
 
-웹 기반 아바타 캐릭터 생성기 겸 일일 무드 다이어리 애플리케이션입니다. 493개의 PNG 에셋을 활용하여 나만의 캐릭터를 만들고, 매일의 기분을 의상과 표정으로 기록할 수 있습니다.
+웹 기반 아바타 캐릭터 생성기 겸 일일 무드 다이어리 애플리케이션입니다. 669개의 PNG 에셋을 활용하여 나만의 캐릭터를 만들고, 매일의 기분을 의상과 표정으로 기록할 수 있습니다.
 
 **배포 URL**: https://aec-character.pages.dev
 
@@ -27,15 +27,17 @@
 - **7가지 기분 카테고리**: 행복/쾌활, 자신감/쿨, 차분/편안, 놀람/흥분, 사려깊음/진지, 유쾌/재미, 결연/강인
 - **6가지 의상 카테고리**: 캐주얼, 포멀, 스포티, 아우터, 보타이, 전체
 - **자동 랜덤 생성**: 카테고리 선택 시 해당 카테고리 내에서 자동으로 랜덤 선택
-- **다시 뽑기**: 표정과 의상 각각에 다시 뽑기 버튼 제공
+- **착용 소품**: 힙색, 망토, 가디건, 헤드폰 등 60종 랜덤 제공
+- **손 아이템**: 음료, 꽃, 운동기구 등 116종 랜덤 제공
+- **다시 뽑기**: 표정, 의상, 착용 소품, 손 아이템 각각에 다시 뽑기 버튼 제공
 - **간소화된 저장 흐름**: 기분 선택 후 1-tap 저장, 의상 옵션은 접이식 "세부 조정" 섹션으로 분리
 
-### 6층 레이어 이미지 합성
+### 8층 레이어 이미지 합성
 
-Canvas API를 사용하여 6개 레이어를 순서대로 합성합니다. 얼굴 레이어는 SVG 에셋을 로드하여 선택된 피부색으로 치환한 뒤 Canvas에 렌더링합니다.
+Canvas API를 사용하여 8개 레이어를 순서대로 합성합니다. 얼굴 레이어는 SVG 에셋을 로드하여 선택된 피부색으로 치환한 뒤 Canvas에 렌더링합니다.
 
 ```
-body(의상) -> face(SVG 얼굴 + 피부색) -> expression(표정) -> mustache(수염) -> hair(헤어) -> glasses(안경)
+body(의상) -> bodyItem(착용 소품) -> face(SVG 얼굴 + 피부색) -> expression(표정) -> mustache(수염) -> hair(헤어) -> glasses(안경) -> handItem(손 아이템)
 ```
 
 ### 무드 다이어리
@@ -217,13 +219,15 @@ npx wrangler pages deploy out/ --project-name aec-character --branch main --comm
 
 ```
 AEC_today01/
-├── _AEC/                          # 원본 PNG 에셋 493개 (읽기 전용)
+├── _AEC/                          # 원본 PNG 에셋 669개 (읽기 전용)
 │   ├── 01_Body 1/                 # 의상 143개
+│   ├── 02_Body Item/              # 착용 소품 60개 (힙색, 망토, 가디건 등)
 │   ├── 03_Face/                   # 얼굴형 5개
 │   ├── 04_Facial_Expression/      # 표정 41개 (7개 기분 그룹)
 │   ├── 05_Mustache/               # 수염 51개
 │   ├── 07_Hair/                   # 헤어스타일 214개
-│   └── 08_Glasses/                # 안경/선글라스 39개
+│   ├── 08_Glasses/                # 안경/선글라스 39개
+│   └── 10_Hand item 4/            # 손 아이템 116개 (음료, 꽃 등)
 ├── src/app/
 │   ├── page.tsx                   # 랜딩 페이지 (자동 리다이렉트)
 │   ├── layout.tsx                 # 루트 레이아웃 + AuthProvider
@@ -268,14 +272,16 @@ AEC_today01/
 │   │   ├── firebase.ts             # Firebase 앱 초기화 및 서비스 내보내기
 │   │   ├── firestore.types.ts     # Firestore 컬렉션 타입 정의
 │   │   ├── fortune/               # 사주/오행 계산 엔진 (순수 TypeScript)
-│   │   ├── imageCompositor.ts     # Canvas 6층 레이어 이미지 합성
+│   │   ├── imageCompositor.ts     # Canvas 8층 레이어 이미지 합성
 │   │   ├── randomEngine.ts        # 랜덤 조합 알고리즘
 │   │   ├── svgProcessor.ts        # SVG 로드/피부색 치환/Canvas Image 변환
 │   │   └── types.ts               # TypeScript 타입 정의
 │   └── data/
 │       └── assetIndex.json        # 사전 빌드된 에셋 인덱스
 ├── public/assets/                 # 정적 에셋 서빙 디렉토리
-│   └── face-svg/                  # SVG 얼굴 에셋 5종 (피부색 치환용)
+│   ├── body-item/                 # 착용 소품 에셋 60종
+│   ├── face-svg/                  # SVG 얼굴 에셋 5종 (피부색 치환용)
+│   └── hand-item/                 # 손 아이템 에셋 116종
 ├── scripts/
 │   ├── copyAssets.ts              # _AEC 에셋 복사 스크립트
 │   └── buildAssetIndex.ts         # 에셋 인덱스 JSON 빌드 스크립트

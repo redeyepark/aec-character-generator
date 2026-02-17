@@ -7,6 +7,33 @@
 
 ---
 
+## [1.7.0] - 2026-02-17
+
+### 착용 소품 및 손 아이템 레이어 추가
+
+#### 추가
+
+- 착용 소품 레이어 (Body Item, 레이어 02): 힙색, 망토, 가디건, 헤드폰, 머플러 등 60종
+- 손 아이템 레이어 (Hand Item, 레이어 10): 음료, 꽃, 운동기구, 악기, 우산 등 116종
+- 8층 레이어 합성 시스템으로 확장 (기존 6층 → 8층)
+- 합성 순서: body → bodyItem → face → expression → mustache → hair → glasses → handItem
+- 무드 페이지에 "착용 소품 다시 뽑기" / "손 아이템 다시 뽑기" 버튼 추가
+- `getBodyItemAssets()`, `getHandItemAssets()` 에셋 매니저 함수 추가
+- `AssetIndex`에 `body-item`, `hand-item` 카테고리 추가
+- `public/assets/body-item/`, `public/assets/hand-item/` 에셋 디렉토리 추가
+
+#### 변경
+
+- `LayerType`에 `bodyItem`, `handItem` 타입 추가
+- `CharacterCombination` 인터페이스에 `bodyItem`, `handItem` 필드 추가
+- 랜덤 엔진에서 착용 소품과 손 아이템 항상 랜덤 선택 (null 없음)
+- 에셋 복사 스크립트에 `02_Body Item` → `body-item`, `10_Hand item 4` → `hand-item` 매핑 추가
+- 에셋 인덱스 빌드 스크립트에 body-item, hand-item 카테고리 추가
+- 다이어리 카드에서 착용 소품/손 아이템 랜덤 표시 (DB 미저장)
+- 총 에셋 수: 493개 → 669개 (176개 추가)
+
+---
+
 ## [1.6.0] - 2026-02-17
 
 ### 출석 체크 이벤트 시스템 (SPEC-EVENT-001)

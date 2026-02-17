@@ -8,12 +8,14 @@ import * as path from "path";
 // 폴더명 매핑: 원본 → 정규화
 const FOLDER_MAP: Record<string, string> = {
   "01_Body 1": "body",
+  "02_Body Item": "body-item",
   "03_Face": "face",
   "03_Face_SVG": "face-svg",
   "04_Facial_Expression": "expression",
   "05_Mustache": "mustache",
   "07_Hair": "hair",
   "08_Glasses": "glasses",
+  "10_Hand item 4": "hand-item",
 };
 
 // 프로젝트 루트 경로

@@ -11,11 +11,13 @@ import type {
 import { FACE_FILENAME_TO_SHAPE } from "./types";
 import {
   getBodyAssets,
+  getBodyItemAssets,
   getCompatibleMustaches,
   getExpressionAssets,
   getFaceAssets,
   getGlassesAssets,
   getHairAssets,
+  getHandItemAssets,
 } from "./assetManager";
 
 /**
@@ -52,6 +54,9 @@ export function generateCharacter(
   const bodyAssets = getBodyAssets(outfit);
   const body = pickRandom(bodyAssets);
 
+  // 1-1. BodyItem 선택 (항상 랜덤, null 없음)
+  const bodyItem = pickRandom(getBodyItemAssets());
+
   // 2. Face 선택
   const faceAssets = getFaceAssets();
   const face = pickRandom(faceAssets);
@@ -81,5 +86,8 @@ export function generateCharacter(
     glasses = pickRandom(glassesAssets);
   }
 
-  return { body, face, expression, mustache, hair, glasses };
+  // 7. HandItem 선택 (항상 랜덤, null 없음)
+  const handItem = pickRandom(getHandItemAssets());
+
+  return { body, bodyItem, face, expression, mustache, hair, glasses, handItem };
 }
