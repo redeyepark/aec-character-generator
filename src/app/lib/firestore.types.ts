@@ -30,3 +30,27 @@ export interface FirestoreMoodEntry {
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
+
+/** 월별 출석 기록 (Firestore attendance/{userId}_{YYYY-MM}) */
+export interface FirestoreAttendance {
+  userId: string;
+  yearMonth: string;             // "YYYY-MM"
+  attendedDates: string[];       // ["2026-02-01", "2026-02-02", ...]
+  currentStreak: number;
+  maxStreak: number;
+  totalDays: number;
+  updatedAt: Timestamp;
+}
+
+/** 사용자 보상 기록 (Firestore rewards/{userId}) */
+export interface FirestoreReward {
+  userId: string;
+  unlockedRewards: {
+    milestone: number;           // 3, 7, 14, 30
+    rewardType: "expression" | "outfit" | "outfit_set";
+    rewardFiles: string[];
+    unlockedAt: Timestamp;
+    unlockedMonth: string;       // "YYYY-MM"
+  }[];
+  updatedAt: Timestamp;
+}

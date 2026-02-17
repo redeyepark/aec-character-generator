@@ -8,13 +8,18 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import AuthGuard from "@/app/components/AuthGuard";
 import DiaryCalendar from "@/app/components/DiaryCalendar";
 import DiaryEntryCard from "@/app/components/DiaryEntryCard";
+import AttendanceCard from "@/app/components/AttendanceCard";
 import { useCharacter } from "@/app/hooks/useCharacter";
 import { useMoodEntries } from "@/app/hooks/useMoodEntries";
+import { useAttendance } from "@/app/hooks/useAttendance";
+import { useRewards } from "@/app/hooks/useRewards";
 import type { MoodEntry } from "@/app/lib/types";
 
 function DiaryPageContent() {
   const { character, fetchCharacter } = useCharacter();
   const { fetchEntriesByMonth, loading, error } = useMoodEntries();
+  const { attendance, fetchAttendance, loading: attendanceLoading } = useAttendance();
+  const { rewards, fetchRewards } = useRewards();
 
   // 현재 표시 중인 연/월
   const now = new Date();
@@ -39,6 +44,8 @@ function DiaryPageContent() {
         window.location.href = "/create/";
         return;
       }
+      // 출석 및 보상 데이터 병렬 조회
+      await Promise.all([fetchAttendance(), fetchRewards()]);
       setIsInitialLoading(false);
     }
     init();
@@ -76,6 +83,12 @@ function DiaryPageContent() {
       setViewMonth((m) => m + 1);
     }
   }, [viewMonth]);
+
+  // 해금된 마일스톤 일수 목록
+  const unlockedMilestones = useMemo(() => {
+    if (!rewards) return [];
+    return rewards.unlockedRewards.map((r) => r.milestone);
+  }, [rewards]);
 
   // 선택된 날짜의 무드 항목
   const selectedEntry = useMemo(() => {
@@ -147,6 +160,15 @@ function DiaryPageContent() {
             <p className="text-sm text-gray-500">
               총 <span className="font-bold text-blue-600">{entries.length}</span>일 기록됨
             </p>
+          </div>
+
+          {/* 출석 현황 카드 */}
+          <div className="mt-4">
+            <AttendanceCard
+              attendance={attendance}
+              loading={attendanceLoading}
+              unlockedMilestones={unlockedMilestones}
+            />
           </div>
         </div>
 

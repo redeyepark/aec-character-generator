@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import type { MoodCategory } from "@/app/lib/types";
 import { MOOD_CATEGORIES } from "@/app/lib/types";
 import { getExpressionAssets } from "@/app/lib/assetManager";
+import { useRewards } from "@/app/hooks/useRewards";
 import AssetPicker from "./AssetPicker";
 
 interface MoodExpressionPickerProps {
@@ -39,11 +40,21 @@ export default function MoodExpressionPicker({
   onMoodSelect,
   onExpressionSelect,
 }: MoodExpressionPickerProps) {
-  // 선택된 기분의 표정 에셋 목록
+  // 보상으로 해금된 표정 파일 목록 조회
+  const { getUnlockedFiles } = useRewards();
+  const unlockedExpressions = useMemo(() => {
+    return getUnlockedFiles("expression");
+  }, [getUnlockedFiles]);
+
+  // 선택된 기분의 표정 에셋 목록 + 해금된 보상 표정 병합
   const expressionAssets = useMemo(() => {
     if (!selectedMood) return [];
-    return getExpressionAssets(selectedMood);
-  }, [selectedMood]);
+    const baseAssets = getExpressionAssets(selectedMood);
+    // 해금된 표정을 앞에 추가 (중복 제거)
+    if (unlockedExpressions.length === 0) return baseAssets;
+    const uniqueUnlocked = unlockedExpressions.filter((f) => !baseAssets.includes(f));
+    return [...uniqueUnlocked, ...baseAssets];
+  }, [selectedMood, unlockedExpressions]);
 
   return (
     <div className="flex flex-col gap-4">

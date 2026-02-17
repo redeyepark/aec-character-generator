@@ -35,5 +35,20 @@ service cloud.firestore {
                     && request.auth.uid == request.resource.data.userId;
       allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
+
+    // attendance: 본인 출석 기록만 읽기/생성/수정 (삭제 불가)
+    match /attendance/{docId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // rewards: 본인 보상 기록만 읽기/쓰기 (삭제 불가)
+    match /rewards/{userId} {
+      allow read: if request.auth != null && userId == request.auth.uid;
+      allow write: if request.auth != null && userId == request.auth.uid;
+      allow delete: if false;
+    }
   }
 }

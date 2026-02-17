@@ -8,10 +8,13 @@
 import { useState, useEffect, useCallback } from "react";
 import AuthGuard from "@/app/components/AuthGuard";
 import CharacterCanvas from "@/app/components/CharacterCanvas";
+import AttendanceToast from "@/app/components/AttendanceToast";
 import { useCharacter } from "@/app/hooks/useCharacter";
 import { useMoodEntries } from "@/app/hooks/useMoodEntries";
 import { useBirthInfo } from "@/app/hooks/useBirthInfo";
 import { useFortune } from "@/app/hooks/useFortune";
+import { useAttendance } from "@/app/hooks/useAttendance";
+import { useRewards } from "@/app/hooks/useRewards";
 import { compositeCharacter, downloadAsPNG } from "@/app/lib/imageCompositor";
 import type {
   MoodCategory,
@@ -19,6 +22,7 @@ import type {
   CharacterCombination,
   DailyMoodState,
   SkinTone,
+  UnlockedReward,
 } from "@/app/lib/types";
 import { MOOD_CATEGORIES, OUTFIT_CATEGORIES } from "@/app/lib/types";
 import { getExpressionAssets, getBodyAssets } from "@/app/lib/assetManager";
@@ -78,6 +82,18 @@ function MoodPageContent() {
   // 운세 관련 훅
   const { birthInfo } = useBirthInfo();
   const { fortune, pickLuckyOutfit } = useFortune(birthInfo);
+
+  // 출석 및 보상 훅
+  const { recordAttendance } = useAttendance();
+  const { checkAndUnlockReward } = useRewards();
+
+  // 출석 토스트 상태
+  const [toastData, setToastData] = useState<{
+    show: boolean;
+    streak: number;
+    isNewAttendance: boolean;
+    unlockedReward: UnlockedReward | null;
+  } | null>(null);
 
   // 일일 무드 상태
   const [moodState, setMoodState] = useState<DailyMoodState>({
@@ -269,12 +285,44 @@ function MoodPageContent() {
       setIsEditMode(true);
       // 3초 후 성공 메시지 숨김
       setTimeout(() => setSaveSuccess(false), 3000);
+
+      // 출석 기록 (기분 저장 성공 후 실행, 실패해도 기분 저장에는 영향 없음)
+      try {
+        const attendanceResult = await recordAttendance();
+        if (attendanceResult) {
+          let reward: UnlockedReward | null = null;
+
+          // 새 출석이고 마일스톤에 도달한 경우 보상 해금 확인
+          if (attendanceResult.isNewAttendance && attendanceResult.milestoneReached) {
+            const now = new Date();
+            const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+            reward = await checkAndUnlockReward(
+              attendanceResult.currentStreak,
+              yearMonth
+            );
+          }
+
+          setToastData({
+            show: true,
+            streak: attendanceResult.currentStreak,
+            isNewAttendance: attendanceResult.isNewAttendance,
+            unlockedReward: reward,
+          });
+        }
+      } catch {
+        // 출석 기록 실패는 무시 (기분 저장은 이미 성공)
+      }
     } catch {
       setPageError("저장에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setIsSaving(false);
     }
-  }, [character, canSave, moodState, upsertEntry]);
+  }, [character, canSave, moodState, upsertEntry, recordAttendance, checkAndUnlockReward]);
+
+  // 토스트 닫기 핸들러
+  const handleToastClose = useCallback(() => {
+    setToastData(null);
+  }, []);
 
   // 다운로드 핸들러
   const handleDownload = useCallback(() => {
@@ -500,6 +548,17 @@ function MoodPageContent() {
           )}
         </div>
       </div>
+
+      {/* 출석 알림 토스트 */}
+      {toastData && (
+        <AttendanceToast
+          show={toastData.show}
+          streak={toastData.streak}
+          isNewAttendance={toastData.isNewAttendance}
+          unlockedReward={toastData.unlockedReward}
+          onClose={handleToastClose}
+        />
+      )}
     </main>
   );
 }

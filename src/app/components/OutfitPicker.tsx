@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import type { OutfitCategory } from "@/app/lib/types";
 import { OUTFIT_CATEGORIES } from "@/app/lib/types";
 import { getBodyAssets } from "@/app/lib/assetManager";
+import { useRewards } from "@/app/hooks/useRewards";
 import AssetPicker from "./AssetPicker";
 
 interface OutfitPickerProps {
@@ -38,11 +39,25 @@ export default function OutfitPicker({
   onCategorySelect,
   onOutfitSelect,
 }: OutfitPickerProps) {
-  // 선택된 카테고리의 의상 에셋 목록
+  // 보상으로 해금된 의상 파일 목록 조회
+  const { getUnlockedFiles } = useRewards();
+  const unlockedOutfits = useMemo(() => {
+    return getUnlockedFiles("outfit");
+  }, [getUnlockedFiles]);
+  const unlockedOutfitSets = useMemo(() => {
+    return getUnlockedFiles("outfit_set");
+  }, [getUnlockedFiles]);
+
+  // 선택된 카테고리의 의상 에셋 목록 + 해금된 보상 의상 병합
   const outfitAssets = useMemo(() => {
     if (!selectedCategory) return [];
-    return getBodyAssets(selectedCategory);
-  }, [selectedCategory]);
+    const baseAssets = getBodyAssets(selectedCategory);
+    // 해금된 의상을 앞에 추가 (중복 제거)
+    const allUnlocked = [...unlockedOutfits, ...unlockedOutfitSets];
+    if (allUnlocked.length === 0) return baseAssets;
+    const uniqueUnlocked = allUnlocked.filter((f) => !baseAssets.includes(f));
+    return [...uniqueUnlocked, ...baseAssets];
+  }, [selectedCategory, unlockedOutfits, unlockedOutfitSets]);
 
   return (
     <div className="flex flex-col gap-4">

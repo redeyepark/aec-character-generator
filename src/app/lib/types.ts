@@ -223,3 +223,46 @@ export interface DailyMoodState {
   outfitCategory: OutfitCategory | null;
   outfitFile: string | null;
 }
+
+// ============================================
+// 이하 SPEC-EVENT-001에서 추가된 타입
+// ============================================
+
+/** 출석 데이터 (UI용 도메인 타입) */
+export interface AttendanceData {
+  yearMonth: string;
+  attendedDates: string[];
+  currentStreak: number;
+  maxStreak: number;
+  totalDays: number;
+}
+
+/** 보상 데이터 (UI용 도메인 타입) */
+export interface RewardData {
+  unlockedRewards: UnlockedReward[];
+}
+
+/** 개별 해금 보상 */
+export interface UnlockedReward {
+  milestone: number;
+  rewardType: "expression" | "outfit" | "outfit_set";
+  rewardFiles: string[];
+  unlockedAt: Date;
+  unlockedMonth: string;
+}
+
+/** 마일스톤 설정 */
+export interface MilestoneConfig {
+  days: number;
+  rewardType: "expression" | "outfit" | "outfit_set";
+  rewardFiles: string[];
+  label: string;
+}
+
+/** 마일스톤 매핑 테이블 */
+export const MILESTONES: MilestoneConfig[] = [
+  { days: 3, rewardType: "expression", rewardFiles: ["special_exp_streak3.png"], label: "3일 연속" },
+  { days: 7, rewardType: "outfit", rewardFiles: ["special_outfit_streak7.png"], label: "7일 연속" },
+  { days: 14, rewardType: "outfit", rewardFiles: ["special_outfit_streak14.png", "special_exp_streak14.png"], label: "14일 연속" },
+  { days: 30, rewardType: "outfit_set", rewardFiles: ["premium_outfit_30_1.png", "premium_outfit_30_2.png", "premium_outfit_30_3.png"], label: "30일 연속" },
+];
