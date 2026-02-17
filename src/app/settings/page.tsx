@@ -13,7 +13,7 @@ import { useAuth } from "@/app/hooks/useAuth";
 
 function SettingsPageContent() {
   const { birthInfo, loading, saveBirthInfo } = useBirthInfo();
-  const { deleteAccount } = useAuth();
+  const { deleteAccount, isGoogleUser } = useAuth();
   const router = useRouter();
 
   // 회원 탈퇴 관련 상태
@@ -24,7 +24,7 @@ function SettingsPageContent() {
 
   // 회원 탈퇴 처리
   const handleDeleteAccount = async () => {
-    if (!deletePassword.trim()) {
+    if (!isGoogleUser && !deletePassword.trim()) {
       setDeleteError("비밀번호를 입력해주세요.");
       return;
     }
@@ -32,7 +32,7 @@ function SettingsPageContent() {
     setDeleting(true);
     setDeleteError(null);
 
-    const result = await deleteAccount(deletePassword);
+    const result = await deleteAccount(isGoogleUser ? undefined : deletePassword);
 
     if (result.error) {
       setDeleteError(result.error);
@@ -140,33 +140,42 @@ function SettingsPageContent() {
               삭제됩니다. 이 작업은 되돌릴 수 없습니다.
             </p>
 
-            {/* 비밀번호 확인 입력 */}
-            <div className="mb-4">
-              <label
-                htmlFor="delete-password"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                비밀번호 확인
-              </label>
-              <input
-                id="delete-password"
-                type="password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !deleting) {
-                    handleDeleteAccount();
-                  }
-                }}
-                disabled={deleting}
-                placeholder="현재 비밀번호를 입력하세요"
-                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300
-                           bg-white text-gray-800 placeholder-gray-400
-                           focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400
-                           disabled:opacity-50 disabled:cursor-not-allowed"
-                autoComplete="current-password"
-              />
-            </div>
+            {/* 비밀번호 확인 입력 (이메일/비밀번호 사용자만) */}
+            {!isGoogleUser && (
+              <div className="mb-4">
+                <label
+                  htmlFor="delete-password"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  비밀번호 확인
+                </label>
+                <input
+                  id="delete-password"
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !deleting) {
+                      handleDeleteAccount();
+                    }
+                  }}
+                  disabled={deleting}
+                  placeholder="현재 비밀번호를 입력하세요"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300
+                             bg-white text-gray-800 placeholder-gray-400
+                             focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400
+                             disabled:opacity-50 disabled:cursor-not-allowed"
+                  autoComplete="current-password"
+                />
+              </div>
+            )}
+
+            {/* Google 사용자 안내 메시지 */}
+            {isGoogleUser && (
+              <p className="text-sm text-gray-600 mb-4">
+                Google 계정은 팝업으로 본인 확인 후 탈퇴됩니다.
+              </p>
+            )}
 
             {/* 오류 메시지 */}
             {deleteError && (

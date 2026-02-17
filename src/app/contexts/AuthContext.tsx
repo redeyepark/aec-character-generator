@@ -22,6 +22,9 @@ import {
   deleteUser,
   EmailAuthProvider,
   reauthenticateWithCredential,
+  GoogleAuthProvider,
+  signInWithPopup,
+  reauthenticateWithPopup,
 } from "firebase/auth";
 import {
   doc,
@@ -61,11 +64,18 @@ export interface AuthContextType {
   refreshHasCharacter: () => Promise<void>;
   /** 인증 메일 재발송 */
   resendVerificationEmail: () => Promise<{ error: string | null }>;
+  /** Google 로그인 */
+  signInWithGoogle: () => Promise<{ error: string | null }>;
+  /** Google 계정 여부 */
+  isGoogleUser: boolean;
   /** 회원 탈퇴 (Firestore 데이터 삭제 + Auth 계정 삭제) */
-  deleteAccount: (password: string) => Promise<{ error: string | null }>;
+  deleteAccount: (password?: string) => Promise<{ error: string | null }>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
+
+// Google 인증 프로바이더 인스턴스
+const googleProvider = new GoogleAuthProvider();
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -77,6 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [hasCharacter, setHasCharacter] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
 
   // 사용자의 관리자 역할 확인 (profiles/{uid} 문서에서 role 필드 조회)
   const checkIsAdmin = useCallback(async (userId: string) => {
@@ -143,6 +154,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setAuthError(null);
 
         if (firebaseUser) {
+          // Google 계정 여부 감지
+          const isGoogle = firebaseUser.providerData.some(
+            (p) => p.providerId === "google.com"
+          );
+          setIsGoogleUser(isGoogle);
+
           // 캐릭터 확인 + 관리자 확인을 병렬 실행 후 로딩 종료 (race condition 방지)
           Promise.all([
             checkHasCharacter(firebaseUser.uid),
@@ -157,6 +174,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else {
           setHasCharacter(false);
           setIsAdmin(false);
+          setIsGoogleUser(false);
           setLoading(false);
           if (timeoutId) {
             clearTimeout(timeoutId);
@@ -275,25 +293,78 @@ export function AuthProvider({ children }: AuthProviderProps) {
     []
   );
 
+  // Google 로그인
+  const signInWithGoogle = useCallback(async (): Promise<{
+    error: string | null;
+  }> => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const googleUser = result.user;
+
+      // 프로필이 없으면 생성 (첫 Google 로그인 사용자)
+      const profileRef = doc(db, "profiles", googleUser.uid);
+      const profileSnap = await getDoc(profileRef);
+      if (!profileSnap.exists()) {
+        await setDoc(profileRef, {
+          userId: googleUser.uid,
+          displayName: googleUser.displayName || null,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      return { error: null };
+    } catch (err) {
+      const firebaseCode = (err as { code?: string }).code;
+      // 사용자가 팝업을 닫은 경우 — 오류가 아님
+      if (firebaseCode === "auth/popup-closed-by-user") {
+        return { error: null };
+      }
+      if (firebaseCode === "auth/popup-blocked") {
+        return { error: "팝업이 차단되었습니다. 팝업 차단을 해제해주세요." };
+      }
+      return {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Google 로그인 중 오류가 발생했습니다.",
+      };
+    }
+  }, []);
+
   // 로그아웃
   const signOut = useCallback(async () => {
     await firebaseSignOut(auth);
     setUser(null);
     setHasCharacter(false);
     setIsAdmin(false);
+    setIsGoogleUser(false);
   }, []);
 
   // 회원 탈퇴: 재인증 → Firestore 데이터 삭제 → Auth 계정 삭제
   const deleteAccount = useCallback(
-    async (password: string): Promise<{ error: string | null }> => {
-      if (!user || !user.email) {
+    async (password?: string): Promise<{ error: string | null }> => {
+      if (!user) {
         return { error: "로그인된 사용자가 없습니다." };
       }
 
       try {
-        // 1. 비밀번호로 재인증 (Firebase는 계정 삭제 전 최근 로그인을 요구함)
-        const credential = EmailAuthProvider.credential(user.email, password);
-        await reauthenticateWithCredential(user, credential);
+        // 1. 재인증: Google 사용자는 팝업, 이메일 사용자는 비밀번호
+        const isGoogle = user.providerData.some(
+          (p) => p.providerId === "google.com"
+        );
+
+        if (isGoogle) {
+          await reauthenticateWithPopup(user, googleProvider);
+        } else {
+          if (!password || !user.email) {
+            return { error: "비밀번호를 입력해주세요." };
+          }
+          const credential = EmailAuthProvider.credential(
+            user.email,
+            password
+          );
+          await reauthenticateWithCredential(user, credential);
+        }
 
         // 2. mood_entries 컬렉션에서 본인 문서 전체 삭제
         const moodQuery = query(
@@ -327,6 +398,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(null);
         setHasCharacter(false);
         setIsAdmin(false);
+        setIsGoogleUser(false);
 
         return { error: null };
       } catch (err) {
@@ -366,6 +438,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         authError,
         signUp,
         signIn,
+        signInWithGoogle,
+        isGoogleUser,
         signOut,
         refreshHasCharacter,
         resendVerificationEmail,
