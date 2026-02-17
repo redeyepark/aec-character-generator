@@ -8,7 +8,6 @@
 import { useState, useEffect, useCallback } from "react";
 import AuthGuard from "@/app/components/AuthGuard";
 import CharacterCanvas from "@/app/components/CharacterCanvas";
-import FortuneCard from "@/app/components/FortuneCard";
 import LuckyOutfitButton from "@/app/components/LuckyOutfitButton";
 import { useCharacter } from "@/app/hooks/useCharacter";
 import { useMoodEntries } from "@/app/hooks/useMoodEntries";
@@ -148,13 +147,15 @@ function MoodPageContent() {
         const randomExpression = pickRandomExpression(randomMood.id);
 
         const randomOutfitCategory = pickRandom(SPECIFIC_OUTFIT_CATEGORIES);
-        const randomOutfit = pickRandomOutfit(randomOutfitCategory.id);
+        // 행운 의상이 있으면 우선 적용, 없으면 랜덤
+        const luckyOutfit = pickLuckyOutfit(randomOutfitCategory.id as Exclude<OutfitCategory, "all">);
+        const initialOutfit = luckyOutfit ?? pickRandomOutfit(randomOutfitCategory.id);
 
         setMoodState({
           moodCategory: randomMood.id,
           expressionFile: randomExpression,
           outfitCategory: randomOutfitCategory.id,
-          outfitFile: randomOutfit,
+          outfitFile: initialOutfit,
         });
       }
 
@@ -185,6 +186,17 @@ function MoodPageContent() {
       .catch(() => setPreviewCanvas(null))
       .finally(() => setIsPreviewLoading(false));
   }, [character, moodState.outfitFile, moodState.expressionFile]);
+
+  // 운세 로드 완료 시 행운 의상 자동 적용 (신규 기록일 때만)
+  useEffect(() => {
+    if (!fortune || isEditMode || !moodState.outfitCategory) return;
+    const luckyOutfit = pickLuckyOutfit(moodState.outfitCategory as Exclude<OutfitCategory, "all">);
+    if (luckyOutfit) {
+      setMoodState(prev => ({ ...prev, outfitFile: luckyOutfit }));
+    }
+    // fortune이 처음 로드될 때만 실행 (의존성 배열에 fortune만)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fortune]);
 
   // 기분 카테고리 클릭 핸들러 (자동 랜덤 표정 선택)
   const handleMoodSelect = useCallback(
@@ -312,25 +324,6 @@ function MoodPageContent() {
 
       {/* 메인 콘텐츠 - 단일 컬럼 레이아웃 (캐릭터 상단, 선택기 하단) */}
       <div className="max-w-3xl mx-auto flex flex-col gap-6 md:gap-8">
-        {/* 운세 카드 (사주 정보가 있을 때만 표시) */}
-        {fortune && <FortuneCard fortune={fortune} />}
-
-        {/* 사주 미입력 안내 배너 */}
-        {!birthInfo && (
-          <a
-            href="/settings"
-            className="block p-4 rounded-xl border border-amber-200 bg-amber-50 text-center
-                       hover:bg-amber-100 transition-colors duration-150"
-          >
-            <p className="text-sm font-medium text-amber-700">
-              운세 추천을 받아보시겠어요?
-            </p>
-            <p className="text-xs text-amber-500 mt-1">
-              설정에서 사주 정보를 입력하면 오늘의 운세와 행운 색상을 확인할 수 있습니다.
-            </p>
-          </a>
-        )}
-
         {/* 상단: 캐릭터 미리보기 */}
         <div className="flex flex-col items-center">
           <h3 className="text-sm font-medium text-gray-500 mb-3">
