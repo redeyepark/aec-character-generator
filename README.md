@@ -10,12 +10,13 @@
 
 ### 캐릭터 생성 위자드
 
-4단계 위자드를 통해 베이스 캐릭터를 생성합니다.
+5단계 위자드를 통해 베이스 캐릭터를 생성합니다.
 
 1. 얼굴형 및 피부색 선택 (SVG 얼굴 5종 + 8종 프리셋 피부색 팔레트)
 2. 헤어스타일 선택 (214종)
 3. 수염 선택 (51종, 얼굴형 호환성 자동 필터링)
 4. 안경 선택 (39종)
+5. 사주 정보 입력 (생년월일 + 음력/양력 선택, 선택 사항)
 
 실시간 Canvas 미리보기를 통해 선택 결과를 즉시 확인할 수 있습니다.
 
@@ -61,17 +62,15 @@ body(의상) -> face(SVG 얼굴 + 피부색) -> expression(표정) -> mustache(�
 
 사주(四柱)/오행(五行) 기반 운세 시스템으로 매일 맞춤형 추천을 제공합니다.
 
-- **사주 계산 엔진**: 생년월일시 기반 오행(목/화/토/금/수) 분석 (순수 TypeScript, 외부 의존성 없음)
-- **일일 운세 카드**: 운세 등급 표시 (대길/길/보통/주의)
-- **행운의 색상 의상 추천**: 오행 기반 행운의 색상에 맞는 의상 추천
-- **생년월일시 입력 폼**: 유효성 검증 포함
-- **무드 페이지 통합**: `/mood` 페이지에서 캐릭터 미리보기 위에 운세 카드 표시
+- **사주 계산 엔진**: 생년월일 기반 오행(목/화/토/금/수) 분석 (순수 TypeScript, 외부 의존성 없음)
+- **행운의 색상 의상 자동 적용**: 오행 기반 행운의 색상에 맞는 의상이 무드 선택 시 자동 적용
+- **생년월일 입력**: 캐릭터 생성 위자드 5단계 또는 설정 페이지에서 입력 (음력/양력 선택 지원)
 
 ### 설정 및 계정 관리
 
 설정 페이지에서 개인 정보 관리와 계정 관련 기능을 제공합니다.
 
-- **사주 정보 관리**: 생년월일시 입력 및 수정
+- **사주 정보 관리**: 생년월일 입력 및 수정 (음력/양력 선택 지원)
 - **회원 탈퇴**: 비밀번호 재인증 후 모든 데이터(mood_entries, characters, profiles) 및 Firebase Auth 계정 완전 삭제
 - **경고 확인 다이얼로그**: 삭제 전 경고 메시지 및 최종 확인 절차
 
@@ -115,8 +114,8 @@ Pencil MCP 기반의 통합 디자인 시스템을 사용합니다.
 |------|------|------|
 | 랜딩 | `/` | Hero + 기능 소개 + CTA |
 | 로그인 | `/login` | 브랜드 패널 + 인증 폼 |
-| 캐릭터 생성 | `/create` | 4단계 위자드 + 실시간 미리보기 (신규 사용자 온보딩 포함) |
-| 무드 선택 | `/mood` | 기분 선택 + 운세 카드 + 1-tap 저장 + 접이식 의상 조정 |
+| 캐릭터 생성 | `/create` | 5단계 위자드 + 실시간 미리보기 (신규 사용자 온보딩 포함) |
+| 무드 선택 | `/mood` | 기분 선택 + 행운 의상 자동 적용 + 1-tap 저장 + 접이식 의상 조정 |
 | 무드 다이어리 | `/diary` | 색상 달력 + 상세 기록 카드 |
 | 설정 | `/settings` | 사주 정보 입력 + 회원 탈퇴 |
 | 관리자 설정 | `/admin-setup` | 관리자 계정 생성 |
@@ -215,7 +214,7 @@ AEC_today01/
 │   ├── page.tsx                   # 랜딩 페이지 (자동 리다이렉트)
 │   ├── layout.tsx                 # 루트 레이아웃 + AuthProvider
 │   ├── login/page.tsx             # 로그인/회원가입
-│   ├── create/page.tsx            # 4단계 캐릭터 생성 위자드
+│   ├── create/page.tsx            # 5단계 캐릭터 생성 위자드
 │   ├── mood/page.tsx              # 일일 무드 선택
 │   ├── diary/page.tsx             # 무드 다이어리 캘린더
 │   ├── admin-setup/page.tsx       # 관리자 계정 생성
@@ -224,15 +223,13 @@ AEC_today01/
 │   │   ├── AssetPicker.tsx        # 에셋 선택 그리드
 │   │   ├── AuthForm.tsx           # 로그인/회원가입 폼
 │   │   ├── AuthGuard.tsx          # 인증 보호 래퍼
-│   │   ├── BirthInfoForm.tsx      # 생년월일시 입력 폼
+│   │   ├── BirthInfoForm.tsx      # 생년월일 입력 폼 (음력/양력 선택 지원)
 │   │   ├── CharacterCanvas.tsx    # Canvas 기반 캐릭터 미리보기
 │   │   ├── ClientLayout.tsx       # 클라이언트 레이아웃 래퍼
 │   │   ├── DiaryCalendar.tsx      # 캘린더 뷰
 │   │   ├── DiaryEntryCard.tsx     # 다이어리 항목 카드
-│   │   ├── FortuneCard.tsx        # 일일 운세 카드
 │   │   ├── OnboardingSlides.tsx   # 3-slide 온보딩 컴포넌트
 │   │   ├── GenerateButton.tsx     # 생성/다운로드 버튼
-│   │   ├── LuckyOutfitButton.tsx  # 행운의 색상 의상 추천 버튼
 │   │   ├── MoodSelector.tsx       # 기분 카테고리 선택기
 │   │   ├── NavBar.tsx             # 내비게이션 바
 │   │   ├── OutfitSelector.tsx     # 의상 카테고리 선택기
@@ -242,7 +239,7 @@ AEC_today01/
 │   │   └── AuthContext.tsx        # 인증 상태 Context Provider
 │   ├── hooks/
 │   │   ├── useAuth.ts             # 인증 상태 관리 훅
-│   │   ├── useBirthInfo.ts        # 생년월일시 정보 관리 훅
+│   │   ├── useBirthInfo.ts        # 생년월일 정보 관리 훅
 │   │   ├── useCharacter.ts        # 캐릭터 CRUD 훅
 │   │   ├── useFortune.ts          # 운세 계산 및 조회 훅
 │   │   └── useMoodEntries.ts      # 무드 항목 CRUD 훅
@@ -278,7 +275,7 @@ Cloud Firestore에 3개의 컬렉션을 사용하며, Firestore 보안 규칙이
 
 | 컬렉션 | 용도 | 제약조건 |
 |--------|------|----------|
-| `profiles` | 사용자 프로필 (display_name, role, birthYear, birthMonth, birthDay, birthHour) | 사용자당 1개 |
+| `profiles` | 사용자 프로필 (display_name, role, birthYear, birthMonth, birthDay, birthHour, isLunar) | 사용자당 1개 |
 | `characters` | 베이스 캐릭터 (face, hair, mustache, glasses, skinTone) | 사용자당 1개 |
 | `mood_entries` | 일일 무드 기록 (mood_category, outfit_file, expression_file) | 사용자당 하루 1개 |
 
