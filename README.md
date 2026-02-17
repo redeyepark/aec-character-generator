@@ -66,6 +66,20 @@ body(의상) -> face(SVG 얼굴 + 피부색) -> expression(표정) -> mustache(�
 - **행운의 색상 의상 자동 적용**: 오행 기반 행운의 색상에 맞는 의상이 무드 선택 시 자동 적용
 - **생년월일 입력**: 캐릭터 생성 위자드 5단계 또는 설정 페이지에서 입력 (음력/양력 선택 지원)
 
+### 출석 체크 이벤트
+
+매일 기분을 기록하면 자동으로 출석이 인정되는 월간 이벤트 시스템입니다.
+
+- **자동 출석 인정**: 무드 저장 시 별도 버튼 없이 출석 자동 기록
+- **연속 출석 스트릭**: 연속 출석 일수 추적 (매월 1일 초기화)
+- **마일스톤 보상**: 연속 출석 달성 시 특별 의상/표정 영구 해금
+  - 3일 연속: 특별 표정 1개
+  - 7일 연속: 특별 의상 1개
+  - 14일 연속: 특별 의상 + 표정 각 1개
+  - 30일 연속: 프리미엄 의상 세트 3개
+- **출석 현황 카드**: 다이어리 페이지에서 월별 출석 통계 및 마일스톤 프로그레스 바 확인
+- **출석 토스트 알림**: 무드 저장 후 연속 출석 일수 및 보상 해금 알림 표시
+
 ### 설정 및 계정 관리
 
 설정 페이지에서 개인 정보 관리와 계정 관련 기능을 제공합니다.
@@ -115,8 +129,8 @@ Pencil MCP 기반의 통합 디자인 시스템을 사용합니다.
 | 랜딩 | `/` | Hero + 기능 소개 + CTA |
 | 로그인 | `/login` | 브랜드 패널 + 인증 폼 |
 | 캐릭터 생성 | `/create` | 5단계 위자드 + 실시간 미리보기 (신규 사용자 온보딩 포함) |
-| 무드 선택 | `/mood` | 기분 선택 + 행운 의상 자동 적용 + 1-tap 저장 + 접이식 의상 조정 |
-| 무드 다이어리 | `/diary` | 색상 달력 + 상세 기록 카드 |
+| 무드 선택 | `/mood` | 기분 선택 + 행운 의상 자동 적용 + 출석 자동 기록 + 1-tap 저장 |
+| 무드 다이어리 | `/diary` | 색상 달력 + 상세 기록 카드 + 출석 현황 카드 |
 | 설정 | `/settings` | 사주 정보 입력 + 회원 탈퇴 |
 | 관리자 설정 | `/admin-setup` | 관리자 계정 생성 |
 
@@ -221,6 +235,8 @@ AEC_today01/
 │   ├── settings/page.tsx          # 설정 페이지 (사주 정보 + 회원 탈퇴)
 │   ├── components/                # UI 컴포넌트
 │   │   ├── AssetPicker.tsx        # 에셋 선택 그리드
+│   │   ├── AttendanceCard.tsx     # 출석 현황 카드
+│   │   ├── AttendanceToast.tsx    # 출석 인정 토스트 알림
 │   │   ├── AuthForm.tsx           # 로그인/회원가입 폼
 │   │   ├── AuthGuard.tsx          # 인증 보호 래퍼
 │   │   ├── BirthInfoForm.tsx      # 생년월일 입력 폼 (음력/양력 선택 지원)
@@ -230,19 +246,23 @@ AEC_today01/
 │   │   ├── DiaryEntryCard.tsx     # 다이어리 항목 카드
 │   │   ├── OnboardingSlides.tsx   # 3-slide 온보딩 컴포넌트
 │   │   ├── GenerateButton.tsx     # 생성/다운로드 버튼
+│   │   ├── MilestoneProgress.tsx  # 마일스톤 진행도 프로그레스 바
 │   │   ├── MoodSelector.tsx       # 기분 카테고리 선택기
 │   │   ├── NavBar.tsx             # 내비게이션 바
 │   │   ├── OutfitSelector.tsx     # 의상 카테고리 선택기
+│   │   ├── RewardBadge.tsx        # 보상 해금 배지
 │   │   ├── SkinTonePicker.tsx     # 피부색 프리셋 선택기 (8종)
 │   │   └── WizardStep.tsx         # 위자드 단계 래퍼
 │   ├── contexts/
 │   │   └── AuthContext.tsx        # 인증 상태 Context Provider
 │   ├── hooks/
+│   │   ├── useAttendance.ts       # 출석 기록 및 스트릭 관리 훅
 │   │   ├── useAuth.ts             # 인증 상태 관리 훅
 │   │   ├── useBirthInfo.ts        # 생년월일 정보 관리 훅
 │   │   ├── useCharacter.ts        # 캐릭터 CRUD 훅
 │   │   ├── useFortune.ts          # 운세 계산 및 조회 훅
-│   │   └── useMoodEntries.ts      # 무드 항목 CRUD 훅
+│   │   ├── useMoodEntries.ts      # 무드 항목 CRUD 훅
+│   │   └── useRewards.ts          # 보상 해금 관리 훅
 │   ├── lib/
 │   │   ├── assetManager.ts        # 에셋 로딩/인덱싱/분류
 │   │   ├── firebase.ts             # Firebase 앱 초기화 및 서비스 내보내기
@@ -271,13 +291,15 @@ AEC_today01/
 
 ## 데이터베이스 스키마
 
-Cloud Firestore에 3개의 컬렉션을 사용하며, Firestore 보안 규칙이 적용되어 있습니다.
+Cloud Firestore에 5개의 컬렉션을 사용하며, Firestore 보안 규칙이 적용되어 있습니다.
 
 | 컬렉션 | 용도 | 제약조건 |
 |--------|------|----------|
 | `profiles` | 사용자 프로필 (display_name, role, birthYear, birthMonth, birthDay, birthHour, isLunar) | 사용자당 1개 |
 | `characters` | 베이스 캐릭터 (face, hair, mustache, glasses, skinTone) | 사용자당 1개 |
 | `mood_entries` | 일일 무드 기록 (mood_category, outfit_file, expression_file) | 사용자당 하루 1개 |
+| `attendance` | 월별 출석 기록 (attendedDates, currentStreak, maxStreak, totalDays) | 사용자당 월 1개 |
+| `rewards` | 보상 해금 기록 (unlockedRewards 배열) | 사용자당 1개 |
 
 ---
 
