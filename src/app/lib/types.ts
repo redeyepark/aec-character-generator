@@ -207,7 +207,7 @@ export interface MoodEntry {
 
 // 캐릭터 생성 위자드 상태
 export interface WizardState {
-  step: 1 | 2 | 3 | 4;
+  step: 1 | 2 | 3 | 4 | 5;
   face: string | null;
   hair: string | null;
   mustache: string | null;

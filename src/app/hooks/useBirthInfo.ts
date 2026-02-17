@@ -5,7 +5,7 @@
  * Firestore profiles/{uid} 문서에서 생년월일 정보를 조회/저장한다.
  */
 import { useState, useCallback, useEffect } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 import { useAuth } from "./useAuth";
 import type { BirthInfo } from "@/app/lib/fortune/types";
@@ -77,7 +77,7 @@ export function useBirthInfo(): UseBirthInfoReturn {
     }
   }, [user]);
 
-  // 사주 정보 저장 (기존 프로필 필드를 덮어쓰지 않도록 updateDoc 사용)
+  // 사주 정보 저장 (setDoc + merge로 문서가 없어도 안전하게 생성/병합)
   const saveBirthInfo = useCallback(
     async (info: BirthInfo): Promise<boolean> => {
       if (!user) {
@@ -91,15 +91,15 @@ export function useBirthInfo(): UseBirthInfoReturn {
       try {
         const profileRef = doc(db, "profiles", user.uid);
 
-        // updateDoc으로 기존 필드를 보존하면서 사주 정보만 추가/수정
-        await updateDoc(profileRef, {
+        // setDoc + merge: 문서가 없으면 생성, 있으면 기존 필드를 보존하면서 병합
+        await setDoc(profileRef, {
           birthYear: info.birthYear,
           birthMonth: info.birthMonth,
           birthDay: info.birthDay,
           ...(info.birthHour !== undefined
             ? { birthHour: info.birthHour }
             : {}),
-        });
+        }, { merge: true });
 
         setBirthInfo(info);
         return true;

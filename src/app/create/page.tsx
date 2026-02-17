@@ -11,8 +11,11 @@ import OnboardingSlides from "@/app/components/OnboardingSlides";
 import WizardStep from "@/app/components/WizardStep";
 import AssetPicker from "@/app/components/AssetPicker";
 import CharacterCanvas from "@/app/components/CharacterCanvas";
+import BirthInfoForm from "@/app/components/BirthInfoForm";
 import { useCharacter } from "@/app/hooks/useCharacter";
 import { useAuth } from "@/app/hooks/useAuth";
+import { useBirthInfo } from "@/app/hooks/useBirthInfo";
+import type { BirthInfo } from "@/app/lib/fortune/types";
 import {
   getFaceSvgAssets,
   getHairAssets,
@@ -30,11 +33,13 @@ const WIZARD_STEPS = [
   { title: "헤어 선택", description: "캐릭터의 헤어스타일을 선택하세요." },
   { title: "수염 선택", description: "수염을 선택하세요. (선택 사항)" },
   { title: "안경 선택", description: "안경을 선택하세요. (선택 사항)" },
+  { title: "사주 정보", description: "운세와 행운 색상을 받으려면 생년월일을 입력하세요. (선택 사항)" },
 ];
 
 function CreatePageContent() {
   const { isAdmin } = useAuth();
   const { character, loading: charLoading, fetchCharacter, createCharacter, updateCharacter } = useCharacter();
+  const { saveBirthInfo } = useBirthInfo();
 
   // 위자드 상태
   const [wizard, setWizard] = useState<WizardState>({
@@ -152,12 +157,13 @@ function CreatePageContent() {
   }, [wizard.face, wizard.hair, wizard.mustache, wizard.glasses, wizard.skinTone]);
 
   // 스텝 이동 핸들러
-  const goToStep = useCallback((step: 1 | 2 | 3 | 4) => {
+  const goToStep = useCallback((step: 1 | 2 | 3 | 4 | 5) => {
     setWizard((prev) => ({ ...prev, step }));
   }, []);
 
   // 저장 핸들러 (편집 모드: updateCharacter, 생성 모드: createCharacter)
-  const handleSave = useCallback(async () => {
+  // birthInfoParam이 있으면 캐릭터 저장 후 사주 정보도 함께 저장한다.
+  const handleSave = useCallback(async (birthInfoParam?: BirthInfo) => {
     if (!wizard.face || !wizard.hair) return;
 
     setIsSaving(true);
@@ -187,6 +193,11 @@ function CreatePageContent() {
         return;
       }
 
+      // 사주 정보가 있으면 함께 저장
+      if (birthInfoParam) {
+        await saveBirthInfo(birthInfoParam);
+      }
+
       // 성공 시 무드 페이지로 이동 (반드시 await 후에 navigate)
       window.location.href = "/mood/";
     } catch (err) {
@@ -196,7 +207,7 @@ function CreatePageContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [wizard, createCharacter, updateCharacter, isEditMode, character]);
+  }, [wizard, createCharacter, updateCharacter, isEditMode, character, saveBirthInfo]);
 
   // 로딩 중
   if (charLoading) {
@@ -245,7 +256,7 @@ function CreatePageContent() {
           {wizard.step === 1 && (
             <WizardStep
               currentStep={1}
-              totalSteps={4}
+              totalSteps={5}
               title={WIZARD_STEPS[0].title}
               description={WIZARD_STEPS[0].description}
               nextDisabled={!wizard.face}
@@ -278,7 +289,7 @@ function CreatePageContent() {
           {wizard.step === 2 && (
             <WizardStep
               currentStep={2}
-              totalSteps={4}
+              totalSteps={5}
               title={WIZARD_STEPS[1].title}
               description={WIZARD_STEPS[1].description}
               nextDisabled={!wizard.hair}
@@ -300,7 +311,7 @@ function CreatePageContent() {
           {wizard.step === 3 && (
             <WizardStep
               currentStep={3}
-              totalSteps={4}
+              totalSteps={5}
               title={WIZARD_STEPS[2].title}
               description={WIZARD_STEPS[2].description}
               canSkip
@@ -326,17 +337,14 @@ function CreatePageContent() {
           {wizard.step === 4 && (
             <WizardStep
               currentStep={4}
-              totalSteps={4}
+              totalSteps={5}
               title={WIZARD_STEPS[3].title}
               description={WIZARD_STEPS[3].description}
               canSkip
-              isLastStep
-              isSaving={isSaving}
               onPrev={() => goToStep(3)}
-              onNext={handleSave}
+              onNext={() => goToStep(5)}
               onSkip={() => {
-                setWizard((prev) => ({ ...prev, glasses: null }));
-                handleSave();
+                setWizard((prev) => ({ ...prev, glasses: null, step: 5 }));
               }}
             >
               <AssetPicker
@@ -347,6 +355,29 @@ function CreatePageContent() {
                   setWizard((prev) => ({ ...prev, glasses: filename }))
                 }
                 optional
+              />
+            </WizardStep>
+          )}
+
+          {/* 스텝 5: 사주 정보 (선택 사항) */}
+          {wizard.step === 5 && (
+            <WizardStep
+              currentStep={5}
+              totalSteps={5}
+              title={WIZARD_STEPS[4].title}
+              description={WIZARD_STEPS[4].description}
+              canSkip
+              isLastStep
+              isSaving={isSaving}
+              onPrev={() => goToStep(4)}
+              onNext={() => handleSave()}
+              onSkip={() => handleSave()}
+            >
+              <BirthInfoForm
+                onSave={async (info: BirthInfo) => {
+                  await handleSave(info);
+                  return true;
+                }}
               />
             </WizardStep>
           )}

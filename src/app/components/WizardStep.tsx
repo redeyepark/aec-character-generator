@@ -34,7 +34,7 @@ interface WizardStepProps {
 }
 
 // 스텝 라벨
-const STEP_LABELS = ["얼굴", "헤어", "수염", "안경"];
+const STEP_LABELS = ["얼굴", "헤어", "수염", "안경", "사주"];
 
 export default function WizardStep({
   currentStep,
