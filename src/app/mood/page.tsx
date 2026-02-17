@@ -8,7 +8,6 @@
 import { useState, useEffect, useCallback } from "react";
 import AuthGuard from "@/app/components/AuthGuard";
 import CharacterCanvas from "@/app/components/CharacterCanvas";
-import LuckyOutfitButton from "@/app/components/LuckyOutfitButton";
 import { useCharacter } from "@/app/hooks/useCharacter";
 import { useMoodEntries } from "@/app/hooks/useMoodEntries";
 import { useBirthInfo } from "@/app/hooks/useBirthInfo";
@@ -284,15 +283,6 @@ function MoodPageContent() {
     }
   }, [previewCanvas]);
 
-  // 행운 의상 선택 핸들러
-  const handleLuckyOutfit = useCallback(() => {
-    const outfitCategory = moodState.outfitCategory ?? "casual";
-    const luckyOutfit = pickLuckyOutfit(outfitCategory as Exclude<OutfitCategory, "all">);
-    if (luckyOutfit) {
-      setMoodState(prev => ({ ...prev, outfitFile: luckyOutfit }));
-    }
-  }, [moodState.outfitCategory, pickLuckyOutfit]);
-
   // 초기 로딩 중
   if (isInitialLoading) {
     return (
@@ -417,14 +407,6 @@ function MoodPageContent() {
               세부 조정
             </summary>
             <div className="p-4 pt-0 flex flex-col gap-4">
-              {/* 행운 의상 선택 버튼 (운세가 있을 때만 표시) */}
-              {fortune && (
-                <LuckyOutfitButton
-                  fortune={fortune}
-                  onSelectLuckyOutfit={handleLuckyOutfit}
-                />
-              )}
-
               {/* 의상 카테고리 선택 */}
               <div>
                 <div className="flex items-center justify-between mb-2">
