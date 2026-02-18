@@ -5,10 +5,11 @@
  * 기분 카테고리와 의상 카테고리만 선택하면 표정/의상이 자동으로 랜덤 선택된다.
  * 6레이어 미리보기: body + face + expression + mustache + hair + glasses
  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import AuthGuard from "@/app/components/AuthGuard";
 import CharacterCanvas from "@/app/components/CharacterCanvas";
 import AttendanceToast from "@/app/components/AttendanceToast";
+import RewardInventoryPanel from "@/app/components/RewardInventoryPanel";
 import { useCharacter } from "@/app/hooks/useCharacter";
 import { useMoodEntries } from "@/app/hooks/useMoodEntries";
 import { useBirthInfo } from "@/app/hooks/useBirthInfo";
@@ -291,22 +292,20 @@ function MoodPageContent() {
     }));
   }, [moodState.outfitCategory, pickRandomOutfit]);
 
-  // 착용 소품 다시 뽑기 (해금된 아이템 + 일일 보상 아이템)
-  const handleRerollBodyItem = useCallback(() => {
+  // 사용 가능한 착용 소품 목록 (tier + daily 병합, 중복 제거)
+  const availableBodyItems = useMemo(() => {
     const { bodyItemCount } = getUnlockedItemCounts();
     const tierItems = bodyItemCount > 0 ? getUnlockedBodyItemAssets(bodyItemCount) : [];
     const dailyItems = getDailyRewardItems("body_item");
-    const allItems = [...new Set([...tierItems, ...dailyItems])];
-    if (allItems.length > 0) setBodyItemFile(pickRandom(allItems));
+    return [...new Set([...tierItems, ...dailyItems])];
   }, [getUnlockedItemCounts, getDailyRewardItems]);
 
-  // 손 아이템 다시 뽑기 (해금된 아이템 + 일일 보상 아이템)
-  const handleRerollHandItem = useCallback(() => {
+  // 사용 가능한 손 아이템 목록 (tier + daily 병합, 중복 제거)
+  const availableHandItems = useMemo(() => {
     const { handItemCount } = getUnlockedItemCounts();
     const tierItems = handItemCount > 0 ? getUnlockedHandItemAssets(handItemCount) : [];
     const dailyItems = getDailyRewardItems("hand_item");
-    const allItems = [...new Set([...tierItems, ...dailyItems])];
-    if (allItems.length > 0) setHandItemFile(pickRandom(allItems));
+    return [...new Set([...tierItems, ...dailyItems])];
   }, [getUnlockedItemCounts, getDailyRewardItems]);
 
   // 저장 가능 여부
@@ -603,39 +602,20 @@ function MoodPageContent() {
                 </button>
               )}
 
-              {/* 착용 소품 다시 뽑기 (해금된 경우 또는 일일 보상 아이템이 있는 경우 표시) */}
-              {(getUnlockedItemCounts().bodyItemCount > 0 || getDailyRewardItems("body_item").length > 0) && (
-                <button
-                  type="button"
-                  onClick={handleRerollBodyItem}
-                  aria-label="착용 소품 다시 뽑기"
-                  className="w-full py-2 text-sm font-medium rounded-lg
-                             border border-purple-300 text-purple-600 bg-purple-50
-                             hover:bg-purple-100 active:bg-purple-200
-                             transition-all duration-150 cursor-pointer
-                             focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1"
-                >
-                  착용 소품 다시 뽑기
-                </button>
-              )}
-
-              {/* 손 아이템 다시 뽑기 (해금된 경우 또는 일일 보상 아이템이 있는 경우 표시) */}
-              {(getUnlockedItemCounts().handItemCount > 0 || getDailyRewardItems("hand_item").length > 0) && (
-                <button
-                  type="button"
-                  onClick={handleRerollHandItem}
-                  aria-label="손 아이템 다시 뽑기"
-                  className="w-full py-2 text-sm font-medium rounded-lg
-                             border border-amber-300 text-amber-600 bg-amber-50
-                             hover:bg-amber-100 active:bg-amber-200
-                             transition-all duration-150 cursor-pointer
-                             focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1"
-                >
-                  손 아이템 다시 뽑기
-                </button>
-              )}
             </div>
           </details>
+
+          {/* 보상 아이템 선택 (해금된 아이템이 있는 경우 표시) */}
+          {(availableBodyItems.length > 0 || availableHandItems.length > 0) && (
+            <RewardInventoryPanel
+              bodyItems={availableBodyItems}
+              handItems={availableHandItems}
+              selectedBodyItem={bodyItemFile}
+              selectedHandItem={handItemFile}
+              onSelectBodyItem={setBodyItemFile}
+              onSelectHandItem={setHandItemFile}
+            />
+          )}
 
           {/* 다운로드 버튼 (세컨더리 아웃라인 스타일) */}
           {previewCanvas && (
