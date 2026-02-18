@@ -15,6 +15,7 @@ import { useBirthInfo } from "@/app/hooks/useBirthInfo";
 import { useFortune } from "@/app/hooks/useFortune";
 import { useAttendance } from "@/app/hooks/useAttendance";
 import { useRewards } from "@/app/hooks/useRewards";
+import { useDailyReward } from "@/app/hooks/useDailyReward";
 import { compositeCharacter, downloadAsPNG } from "@/app/lib/imageCompositor";
 import type {
   MoodCategory,
@@ -24,7 +25,7 @@ import type {
   SkinTone,
   UnlockedReward,
 } from "@/app/lib/types";
-import { MOOD_CATEGORIES, OUTFIT_CATEGORIES, ITEM_UNLOCK_TIERS } from "@/app/lib/types";
+import { MOOD_CATEGORIES, OUTFIT_CATEGORIES } from "@/app/lib/types";
 import { getExpressionAssets, getBodyAssets, getUnlockedBodyItemAssets, getUnlockedHandItemAssets } from "@/app/lib/assetManager";
 
 // 기분별 이모티콘 매핑
@@ -87,12 +88,20 @@ function MoodPageContent() {
   const { recordAttendance } = useAttendance();
   const { fetchRewards, checkAndUnlockReward, checkAndUnlockItemRewards, getUnlockedItemCounts } = useRewards();
 
+  // 일일 보상 훅
+  const { claimDailyReward, fetchEventReward, getDailyRewardItems, eventReward } = useDailyReward();
+
   // 출석 토스트 상태
   const [toastData, setToastData] = useState<{
     show: boolean;
     streak: number;
     isNewAttendance: boolean;
     unlockedReward: UnlockedReward | null;
+    // 일일 보상 필드
+    dailyRewardItem: { itemType: "body_item" | "hand_item"; itemFile: string } | null;
+    cycleProgress: { current: number; total: number } | null;
+    isCycleComplete: boolean;
+    bonusItems: { itemType: "body_item" | "hand_item"; itemFile: string }[] | null;
   } | null>(null);
 
   // 일일 무드 상태
@@ -152,17 +161,20 @@ function MoodPageContent() {
 
       // 보상 데이터 로드 후 해금된 아이템 개수 확인
       await fetchRewards();
+      // 일일 보상 데이터 로드
+      await fetchEventReward();
       const { bodyItemCount, handItemCount } = getUnlockedItemCounts();
 
-      // 착용 소품 / 손 아이템: 해금된 아이템에서만 랜덤 선택
-      if (bodyItemCount > 0) {
-        const bodyItems = getUnlockedBodyItemAssets(bodyItemCount);
-        if (bodyItems.length > 0) setBodyItemFile(pickRandom(bodyItems));
-      }
-      if (handItemCount > 0) {
-        const handItems = getUnlockedHandItemAssets(handItemCount);
-        if (handItems.length > 0) setHandItemFile(pickRandom(handItems));
-      }
+      // 티어 해금 아이템 + 일일 보상 아이템 병합
+      const tierBodyItems = bodyItemCount > 0 ? getUnlockedBodyItemAssets(bodyItemCount) : [];
+      const dailyBodyItems = getDailyRewardItems("body_item");
+      const allBodyItems = [...new Set([...tierBodyItems, ...dailyBodyItems])];
+      if (allBodyItems.length > 0) setBodyItemFile(pickRandom(allBodyItems));
+
+      const tierHandItems = handItemCount > 0 ? getUnlockedHandItemAssets(handItemCount) : [];
+      const dailyHandItems = getDailyRewardItems("hand_item");
+      const allHandItems = [...new Set([...tierHandItems, ...dailyHandItems])];
+      if (allHandItems.length > 0) setHandItemFile(pickRandom(allHandItems));
 
       // 오늘의 무드 항목이 이미 있으면 로드
       const todayEntry = await fetchTodayEntry();
@@ -279,21 +291,23 @@ function MoodPageContent() {
     }));
   }, [moodState.outfitCategory, pickRandomOutfit]);
 
-  // 착용 소품 다시 뽑기 (해금된 아이템에서만)
+  // 착용 소품 다시 뽑기 (해금된 아이템 + 일일 보상 아이템)
   const handleRerollBodyItem = useCallback(() => {
     const { bodyItemCount } = getUnlockedItemCounts();
-    if (bodyItemCount <= 0) return;
-    const items = getUnlockedBodyItemAssets(bodyItemCount);
-    if (items.length > 0) setBodyItemFile(pickRandom(items));
-  }, [getUnlockedItemCounts]);
+    const tierItems = bodyItemCount > 0 ? getUnlockedBodyItemAssets(bodyItemCount) : [];
+    const dailyItems = getDailyRewardItems("body_item");
+    const allItems = [...new Set([...tierItems, ...dailyItems])];
+    if (allItems.length > 0) setBodyItemFile(pickRandom(allItems));
+  }, [getUnlockedItemCounts, getDailyRewardItems]);
 
-  // 손 아이템 다시 뽑기 (해금된 아이템에서만)
+  // 손 아이템 다시 뽑기 (해금된 아이템 + 일일 보상 아이템)
   const handleRerollHandItem = useCallback(() => {
     const { handItemCount } = getUnlockedItemCounts();
-    if (handItemCount <= 0) return;
-    const items = getUnlockedHandItemAssets(handItemCount);
-    if (items.length > 0) setHandItemFile(pickRandom(items));
-  }, [getUnlockedItemCounts]);
+    const tierItems = handItemCount > 0 ? getUnlockedHandItemAssets(handItemCount) : [];
+    const dailyItems = getDailyRewardItems("hand_item");
+    const allItems = [...new Set([...tierItems, ...dailyItems])];
+    if (allItems.length > 0) setHandItemFile(pickRandom(allItems));
+  }, [getUnlockedItemCounts, getDailyRewardItems]);
 
   // 저장 가능 여부
   const canSave =
@@ -348,11 +362,23 @@ function MoodPageContent() {
             );
           }
 
+          // 일일 보상 수령 (출석 기록 이후 실행)
+          let dailyClaimResult = null;
+          try {
+            dailyClaimResult = await claimDailyReward();
+          } catch {
+            // 일일 보상 수령 실패는 무시 (기존 흐름에 영향 없음)
+          }
+
           setToastData({
             show: true,
             streak: attendanceResult.currentStreak,
             isNewAttendance: attendanceResult.isNewAttendance,
             unlockedReward: reward,
+            dailyRewardItem: dailyClaimResult ? { itemType: dailyClaimResult.itemType, itemFile: dailyClaimResult.itemFile } : null,
+            cycleProgress: dailyClaimResult ? { current: dailyClaimResult.dayNumber, total: eventReward?.cycleLength ?? 14 } : null,
+            isCycleComplete: dailyClaimResult?.isCycleComplete ?? false,
+            bonusItems: dailyClaimResult?.bonusItems ?? null,
           });
         }
       } catch {
@@ -363,7 +389,7 @@ function MoodPageContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [character, canSave, moodState, upsertEntry, recordAttendance, checkAndUnlockReward, checkAndUnlockItemRewards]);
+  }, [character, canSave, moodState, upsertEntry, recordAttendance, checkAndUnlockReward, checkAndUnlockItemRewards, claimDailyReward, eventReward]);
 
   // 토스트 닫기 핸들러
   const handleToastClose = useCallback(() => {
@@ -577,8 +603,8 @@ function MoodPageContent() {
                 </button>
               )}
 
-              {/* 착용 소품 다시 뽑기 (해금된 경우에만 표시) */}
-              {getUnlockedItemCounts().bodyItemCount > 0 && (
+              {/* 착용 소품 다시 뽑기 (해금된 경우 또는 일일 보상 아이템이 있는 경우 표시) */}
+              {(getUnlockedItemCounts().bodyItemCount > 0 || getDailyRewardItems("body_item").length > 0) && (
                 <button
                   type="button"
                   onClick={handleRerollBodyItem}
@@ -593,8 +619,8 @@ function MoodPageContent() {
                 </button>
               )}
 
-              {/* 손 아이템 다시 뽑기 (해금된 경우에만 표시) */}
-              {getUnlockedItemCounts().handItemCount > 0 && (
+              {/* 손 아이템 다시 뽑기 (해금된 경우 또는 일일 보상 아이템이 있는 경우 표시) */}
+              {(getUnlockedItemCounts().handItemCount > 0 || getDailyRewardItems("hand_item").length > 0) && (
                 <button
                   type="button"
                   onClick={handleRerollHandItem}
@@ -634,6 +660,10 @@ function MoodPageContent() {
           streak={toastData.streak}
           isNewAttendance={toastData.isNewAttendance}
           unlockedReward={toastData.unlockedReward}
+          dailyRewardItem={toastData.dailyRewardItem}
+          cycleProgress={toastData.cycleProgress}
+          isCycleComplete={toastData.isCycleComplete}
+          bonusItems={toastData.bonusItems}
           onClose={handleToastClose}
         />
       )}

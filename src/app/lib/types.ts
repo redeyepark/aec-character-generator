@@ -289,3 +289,67 @@ export const MILESTONES: MilestoneConfig[] = [
   { days: 14, rewardType: "outfit", rewardFiles: ["special_outfit_streak14.png", "special_exp_streak14.png"], label: "14일 연속" },
   { days: 30, rewardType: "outfit_set", rewardFiles: ["premium_outfit_30_1.png", "premium_outfit_30_2.png", "premium_outfit_30_3.png"], label: "30일 연속" },
 ];
+
+// ============================================
+// 이하 SPEC-EVENT-002에서 추가된 타입
+// ============================================
+
+/** 일일 보상 수령 기록 */
+export interface DailyRewardClaim {
+  dayNumber: number;        // 주기 내 일차 (1~cycleLength)
+  claimedDate: string;      // 실제 수령 날짜 (YYYY-MM-DD)
+  itemType: "body_item" | "hand_item";
+  itemFile: string;         // 지급된 아이템 파일명
+}
+
+/** 이벤트 보상 데이터 (UI용 도메인 타입) */
+export interface EventRewardData {
+  cycleLength: number;              // 주기 길이 (기본 14)
+  cycleNumber: number;              // 현재 주기 번호 (1, 2, 3...)
+  cycleStartDate: string;           // 현재 주기 시작일 (YYYY-MM-DD)
+  dailyClaims: DailyRewardClaim[];  // 현재 주기의 수령 기록
+  cycleCompleted: boolean;          // 현재 주기 완주 여부
+  completionBonusClaimed: boolean;  // 완주 보너스 수령 여부
+  completedCycles: number;          // 총 완주 횟수
+  allClaimedItems: {                // 영구 보관: 모든 주기의 수령 아이템
+    itemType: "body_item" | "hand_item";
+    itemFile: string;
+  }[];
+}
+
+/** 일일 보상 수령 결과 */
+export interface DailyClaimResult {
+  claimed: boolean;
+  dayNumber: number;
+  itemType: "body_item" | "hand_item";
+  itemFile: string;
+  isCycleComplete: boolean;
+  bonusItems: { itemType: "body_item" | "hand_item"; itemFile: string }[] | null;
+}
+
+/** 아이템 풀 항목 */
+export interface ItemPoolEntry {
+  itemType: "body_item" | "hand_item";
+  itemFile: string;
+}
+
+/** 주기 완주 보너스 설정 */
+export interface CycleCompletionBonus {
+  cycleLength: number;
+  bonusItems: ItemPoolEntry[];
+  label: string;
+}
+
+/** 기본 주기 길이 */
+export const DEFAULT_CYCLE_LENGTH = 14;
+
+/** 주기 완주 보너스 설정 */
+export const CYCLE_COMPLETION_BONUS: CycleCompletionBonus = {
+  cycleLength: 14,
+  bonusItems: [
+    { itemType: "body_item", itemFile: "event_bonus_body_01.png" },
+    { itemType: "hand_item", itemFile: "event_bonus_hand_01.png" },
+    { itemType: "hand_item", itemFile: "event_bonus_hand_02.png" },
+  ],
+  label: "14일 완주 보너스",
+};

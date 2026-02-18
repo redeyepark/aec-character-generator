@@ -47,7 +47,7 @@ body(의상) -> bodyItem(착용 소품) -> face(SVG 얼굴 + 피부색) -> expre
 
 ### 인증 및 데이터 관리
 
-- 이메일/비밀번호 기반 로그인/회원가입 (Firebase Authentication)
+- 이메일/비밀번호 및 Google 소셜 로그인 (Firebase Authentication)
 - 이메일 인증 (회원가입 시 인증 메일 자동 발송, 재발송 버튼 제공)
 - 사용자별 캐릭터 및 무드 데이터 자동 저장
 - Firestore 보안 규칙으로 데이터 격리
@@ -82,6 +82,18 @@ body(의상) -> bodyItem(착용 소품) -> face(SVG 얼굴 + 피부색) -> expre
 - **출석 현황 카드**: 다이어리 페이지에서 월별 출석 통계 및 마일스톤 프로그레스 바 확인
 - **출석 토스트 알림**: 무드 저장 후 연속 출석 일수 및 보상 해금 알림 표시
 
+### 일일 아이템 보상 이벤트
+
+매일 출석 시 랜덤 아이템을 지급하는 14일 주기 이벤트 시스템입니다.
+
+- **일일 랜덤 보상**: 매일 출석 시 body_item 또는 hand_item 풀에서 랜덤 아이템 1개 지급
+- **14일 주기**: 주기 내 14일을 채우면 완주 보너스 지급 (연속 출석 불요)
+- **주기 완주 보너스**: 특별 body_item 1개 + hand_item 2개 (1회 완주 시)
+- **자동 주기 갱신**: 주기 완주 후 다음 출석 시 새 주기 자동 시작
+- **아이템 영구 소유**: 수령한 아이템은 주기 초기화와 무관하게 영구 사용 가능
+- **중복 방지**: 같은 주기 내 이미 지급된 아이템과 중복되지 않는 아이템 우선 선택
+- **주기 현황 카드**: 진행도 시각화 (14개 원형 아이콘 그리드 + 프로그레스 바)
+
 ### 설정 및 계정 관리
 
 설정 페이지에서 개인 정보 관리와 계정 관련 기능을 제공합니다.
@@ -107,6 +119,34 @@ body(의상) -> bodyItem(착용 소품) -> face(SVG 얼굴 + 피부색) -> expre
 | 백엔드/인증 | Firebase (Authentication + Cloud Firestore) |
 | 배포 | Cloudflare Pages |
 | 빌드 모드 | Static Export (`output: 'export'`) |
+| 테스트 | Vitest 4 + Testing Library |
+
+---
+
+## 테스트
+
+| 구분 | 기술 |
+|------|------|
+| 테스트 러너 | Vitest 4 |
+| 테스트 유틸리티 | @testing-library/react |
+| DOM 환경 | jsdom |
+
+### 테스트 실행
+
+```bash
+# 전체 테스트 실행
+npm test
+
+# Watch 모드 (파일 변경 시 자동 재실행)
+npm run test:watch
+```
+
+### 테스트 커버리지
+
+| 모듈 | 테스트 수 | 커버리지 영역 |
+|------|-----------|--------------|
+| 출석체크 유틸리티 | 63개 | 날짜 포매팅, 스트릭 계산, 마일스톤 매칭, 아이템 해금, 보상 중복 확인 |
+| 일일 보상 유틸리티 | 58개 | 중복 수령 확인, 랜덤 아이템 선택, 주기 완주 판정, 진행도 계산, 풀 구성 |
 
 ---
 
@@ -269,6 +309,8 @@ AEC_today01/
 │   │   └── useRewards.ts          # 보상 해금 관리 훅
 │   ├── lib/
 │   │   ├── assetManager.ts        # 에셋 로딩/인덱싱/분류
+│   │   ├── attendance-utils.ts     # 출석 순수 비즈니스 로직 유틸리티
+│   │   ├── __tests__/              # 단위 테스트
 │   │   ├── firebase.ts             # Firebase 앱 초기화 및 서비스 내보내기
 │   │   ├── firestore.types.ts     # Firestore 컬렉션 타입 정의
 │   │   ├── fortune/               # 사주/오행 계산 엔진 (순수 TypeScript)
@@ -289,6 +331,9 @@ AEC_today01/
 ├── firestore.indexes.json        # Firestore 복합 인덱스 정의
 ├── firebase.json                 # Firebase 프로젝트 설정
 ├── next.config.ts                 # 정적 내보내기 설정
+├── vitest.config.ts               # Vitest 테스트 설정
+├── vitest.setup.ts                # 테스트 셋업 (DOM 매처 확장)
+├── tsconfig.test.json             # 테스트용 TypeScript 설정
 ├── package.json                   # 의존성 관리
 └── tsconfig.json                  # TypeScript 설정
 ```

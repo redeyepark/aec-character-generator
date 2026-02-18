@@ -54,3 +54,26 @@ export interface FirestoreReward {
   }[];
   updatedAt: Timestamp;
 }
+
+/** 이벤트 보상 기록 (Firestore event_rewards/{userId}) */
+export interface FirestoreEventReward {
+  userId: string;
+  cycleLength: number;
+  cycleNumber: number;
+  cycleStartDate: string;
+  dailyClaims: {
+    dayNumber: number;
+    claimedDate: string;
+    itemType: "body_item" | "hand_item";
+    itemFile: string;
+    claimedAt: Timestamp;
+  }[];
+  cycleCompleted: boolean;
+  completionBonusClaimed: boolean;
+  completedCycles: number;
+  allClaimedItems: {
+    itemType: "body_item" | "hand_item";
+    itemFile: string;
+  }[];
+  updatedAt: Timestamp;
+}

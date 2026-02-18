@@ -20,6 +20,14 @@ interface AttendanceToastProps {
   unlockedReward: UnlockedReward | null;
   /** 닫기 핸들러 */
   onClose: () => void;
+  /** 일일 보상으로 획득한 아이템 (없으면 null/undefined) */
+  dailyRewardItem?: { itemType: "body_item" | "hand_item"; itemFile: string } | null;
+  /** 주기 진행 현황 (없으면 null/undefined) */
+  cycleProgress?: { current: number; total: number } | null;
+  /** 주기 완주 여부 */
+  isCycleComplete?: boolean;
+  /** 완주 보너스 아이템 목록 (없으면 null/undefined) */
+  bonusItems?: { itemType: "body_item" | "hand_item"; itemFile: string }[] | null;
 }
 
 export default function AttendanceToast({
@@ -28,6 +36,10 @@ export default function AttendanceToast({
   isNewAttendance,
   unlockedReward,
   onClose,
+  dailyRewardItem,
+  cycleProgress,
+  isCycleComplete = false,
+  bonusItems,
 }: AttendanceToastProps) {
   // 4초 후 자동 닫기
   useEffect(() => {
@@ -99,6 +111,44 @@ export default function AttendanceToast({
             <p className="text-sm">
               오늘의 기분이 수정되었습니다
             </p>
+          )}
+
+          {/* 일일 보상 아이템 획득 정보 */}
+          {dailyRewardItem && (
+            <p className={`text-xs mt-1.5 ${
+              unlockedReward ? "opacity-90" : "text-blue-600"
+            }`}>
+              일일 보상: {dailyRewardItem.itemType === "body_item" ? "착용 소품" : "손 아이템"} 획득!
+            </p>
+          )}
+
+          {/* 주기 진행 현황 */}
+          {cycleProgress && (
+            <p className={`text-xs mt-0.5 ${
+              unlockedReward ? "opacity-80" : "text-gray-500"
+            }`}>
+              {cycleProgress.current}/{cycleProgress.total}일 완료
+            </p>
+          )}
+
+          {/* 주기 완주 축하 메시지 + 보너스 아이템 */}
+          {isCycleComplete && (
+            <div className={`mt-1.5 pt-1.5 border-t ${
+              unlockedReward ? "border-white/30" : "border-gray-200"
+            }`}>
+              <p className={`text-xs font-bold ${
+                unlockedReward ? "text-white" : "text-blue-600"
+              }`}>
+                주기 완주 달성!
+              </p>
+              {bonusItems && bonusItems.length > 0 && (
+                <p className={`text-xs mt-0.5 ${
+                  unlockedReward ? "opacity-80" : "text-gray-500"
+                }`}>
+                  보너스 아이템 {bonusItems.length}개 획득
+                </p>
+              )}
+            </div>
           )}
         </div>
 
