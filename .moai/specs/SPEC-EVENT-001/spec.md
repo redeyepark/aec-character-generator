@@ -1,9 +1,10 @@
 ---
 id: SPEC-EVENT-001
 version: "1.0.0"
-status: approved
+status: completed
 created: "2026-02-17"
 updated: "2026-02-17"
+completed: "2026-02-17"
 author: MoAI
 priority: medium
 ---

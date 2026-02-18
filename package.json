@@ -9,7 +9,9 @@
     "lint": "next lint",
     "copy-assets": "npx tsx scripts/copyAssets.ts",
     "build-index": "npx tsx scripts/buildAssetIndex.ts",
-    "setup": "npm run copy-assets && npm run build-index"
+    "setup": "npm run copy-assets && npm run build-index",
+    "test": "vitest --run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "firebase": "^12.9.0",
@@ -19,14 +21,20 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.1.4",
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.1.0",
+    "jsdom": "^28.1.0",
     "postcss": "^8.0.0",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.18"
   }
 }
