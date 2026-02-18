@@ -37,6 +37,8 @@ function toMoodEntry(
     outfit_file: data.outfitFile,
     expression_file: data.expressionFile,
     composite_image_url: data.compositeImageUrl ?? null,
+    outfit_main_color: data.outfitMainColor ?? undefined,
+    outfit_sub_color: data.outfitSubColor ?? undefined,
     created_at:
       data.createdAt?.toDate().toISOString() ?? new Date().toISOString(),
     updated_at:
@@ -60,6 +62,8 @@ interface UseMoodEntriesReturn {
     moodCategory: MoodCategory;
     outfitFile: string;
     expressionFile: string;
+    outfitMainColor?: string;
+    outfitSubColor?: string;
   }) => Promise<MoodEntry | null>;
 }
 
@@ -152,6 +156,8 @@ export function useMoodEntries(): UseMoodEntriesReturn {
       moodCategory: MoodCategory;
       outfitFile: string;
       expressionFile: string;
+      outfitMainColor?: string;
+      outfitSubColor?: string;
     }): Promise<MoodEntry | null> => {
       if (!user) return null;
 
@@ -176,6 +182,8 @@ export function useMoodEntries(): UseMoodEntriesReturn {
             outfitFile: data.outfitFile,
             expressionFile: data.expressionFile,
             characterId: data.characterId,
+            ...(data.outfitMainColor !== undefined && { outfitMainColor: data.outfitMainColor }),
+            ...(data.outfitSubColor !== undefined && { outfitSubColor: data.outfitSubColor }),
             updatedAt: serverTimestamp(),
           });
 
@@ -190,6 +198,8 @@ export function useMoodEntries(): UseMoodEntriesReturn {
             outfit_file: data.outfitFile,
             expression_file: data.expressionFile,
             composite_image_url: existingData.compositeImageUrl ?? null,
+            outfit_main_color: data.outfitMainColor,
+            outfit_sub_color: data.outfitSubColor,
             created_at:
               existingData.createdAt?.toDate().toISOString() ??
               new Date().toISOString(),
@@ -207,6 +217,8 @@ export function useMoodEntries(): UseMoodEntriesReturn {
             outfitFile: data.outfitFile,
             expressionFile: data.expressionFile,
             compositeImageUrl: null,
+            ...(data.outfitMainColor !== undefined && { outfitMainColor: data.outfitMainColor }),
+            ...(data.outfitSubColor !== undefined && { outfitSubColor: data.outfitSubColor }),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
           });
@@ -220,6 +232,8 @@ export function useMoodEntries(): UseMoodEntriesReturn {
             outfit_file: data.outfitFile,
             expression_file: data.expressionFile,
             composite_image_url: null,
+            outfit_main_color: data.outfitMainColor,
+            outfit_sub_color: data.outfitSubColor,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };

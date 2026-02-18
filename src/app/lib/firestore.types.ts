@@ -27,6 +27,8 @@ export interface FirestoreMoodEntry {
   outfitFile: string;
   expressionFile: string;
   compositeImageUrl: string | null;
+  outfitMainColor?: string;  // 의상 메인 색상 hex (SPEC-OUTFIT-001)
+  outfitSubColor?: string;   // 의상 서브 색상 hex (SPEC-OUTFIT-001)
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

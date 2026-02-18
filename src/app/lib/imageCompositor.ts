@@ -3,9 +3,10 @@
  * 캐릭터 조합의 각 레이어 이미지를 Canvas에 순서대로 합성한다.
  */
 import type { CharacterCombination, LayerType, SkinTone } from "./types";
-import { SKIN_TONE_COLORS, DEFAULT_SKIN_TONE } from "./types";
+import { SKIN_TONE_COLORS, DEFAULT_SKIN_TONE, DEFAULT_OUTFIT_MAIN_COLOR, DEFAULT_OUTFIT_SUB_COLOR } from "./types";
 import { getAssetPath } from "./assetManager";
-import { loadColoredSvgAsImage } from "./svgProcessor";
+import { loadColoredSvgAsImage, loadColoredOutfitSvgAsImage } from "./svgProcessor";
+import type { OutfitColorOptions } from "./svgProcessor";
 
 // 이미지 캐시 (같은 파일을 반복 로드하지 않도록)
 const imageCache = new Map<string, HTMLImageElement>();
@@ -91,8 +92,20 @@ export async function compositeCharacter(
     if (layer.filename) {
       const path = getAssetPath(layer.type, layer.filename);
 
-      // SVG 얼굴 파일인 경우 피부색을 적용하여 로드, PNG는 기존 방식 유지
-      if (layer.type === "face" && layer.filename.endsWith(".svg")) {
+      // SVG 의상 파일인 경우 3색 교체하여 로드 (SPEC-OUTFIT-001)
+      if (layer.type === "body" && layer.filename.endsWith(".svg")) {
+        const skinHex = getSkinToneHex(combination.skinTone ?? DEFAULT_SKIN_TONE);
+        const outfitOptions: OutfitColorOptions = {
+          mainColor: combination.outfitMainColor ?? DEFAULT_OUTFIT_MAIN_COLOR,
+          subColor: combination.outfitSubColor ?? DEFAULT_OUTFIT_SUB_COLOR,
+          skinColor: skinHex,
+        };
+        loadTasks.push({
+          type: layer.type,
+          promise: loadColoredOutfitSvgAsImage(path, outfitOptions),
+        });
+      // SVG 얼굴 파일인 경우 피부색을 적용하여 로드
+      } else if (layer.type === "face" && layer.filename.endsWith(".svg")) {
         const skinHex = getSkinToneHex(combination.skinTone ?? DEFAULT_SKIN_TONE);
         loadTasks.push({
           type: layer.type,

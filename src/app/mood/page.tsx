@@ -27,7 +27,9 @@ import type {
   UnlockedReward,
 } from "@/app/lib/types";
 import { MOOD_CATEGORIES, OUTFIT_CATEGORIES } from "@/app/lib/types";
-import { getExpressionAssets, getBodyAssets, getUnlockedBodyItemAssets, getUnlockedHandItemAssets } from "@/app/lib/assetManager";
+import { getExpressionAssets, getBodyAssets, getBodySvgAssets, getUnlockedBodyItemAssets, getUnlockedHandItemAssets } from "@/app/lib/assetManager";
+import { DEFAULT_OUTFIT_MAIN_COLOR, DEFAULT_OUTFIT_SUB_COLOR } from "@/app/lib/types";
+import OutfitColorPicker from "@/app/components/OutfitColorPicker";
 
 // 기분별 이모티콘 매핑
 const MOOD_ICONS: Record<MoodCategory, string> = {
@@ -111,6 +113,8 @@ function MoodPageContent() {
     expressionFile: null,
     outfitCategory: null,
     outfitFile: null,
+    outfitMainColor: DEFAULT_OUTFIT_MAIN_COLOR,
+    outfitSubColor: DEFAULT_OUTFIT_SUB_COLOR,
   });
 
   // 착용 소품 / 손 아이템 상태 (DB에 저장하지 않고 매번 랜덤 생성)
@@ -186,6 +190,8 @@ function MoodPageContent() {
           expressionFile: todayEntry.expression_file,
           outfitCategory: null, // 카테고리는 복원하지 않음
           outfitFile: todayEntry.outfit_file,
+          outfitMainColor: todayEntry.outfit_main_color,
+          outfitSubColor: todayEntry.outfit_sub_color,
         });
       } else {
         // 오늘의 항목이 없으면 랜덤으로 기분/표정/의상을 자동 선택
@@ -226,6 +232,8 @@ function MoodPageContent() {
       glasses: character.glasses,
       handItem: handItemFile,
       skinTone: character.skinTone as SkinTone,
+      outfitMainColor: moodState.outfitMainColor,
+      outfitSubColor: moodState.outfitSubColor,
     };
 
     setIsPreviewLoading(true);
@@ -233,7 +241,7 @@ function MoodPageContent() {
       .then(setPreviewCanvas)
       .catch(() => setPreviewCanvas(null))
       .finally(() => setIsPreviewLoading(false));
-  }, [character, moodState.outfitFile, moodState.expressionFile, bodyItemFile, handItemFile]);
+  }, [character, moodState.outfitFile, moodState.expressionFile, moodState.outfitMainColor, moodState.outfitSubColor, bodyItemFile, handItemFile]);
 
   // 운세 로드 완료 시 행운 의상 자동 적용 (신규 기록일 때만)
   useEffect(() => {
@@ -292,6 +300,19 @@ function MoodPageContent() {
     }));
   }, [moodState.outfitCategory, pickRandomOutfit]);
 
+  // SVG 의상 에셋 목록 (SPEC-OUTFIT-001)
+  const svgOutfitAssets = useMemo(() => getBodySvgAssets(), []);
+
+  // 의상 메인 색상 변경 핸들러 (SPEC-OUTFIT-001)
+  const handleOutfitMainColorChange = useCallback((hex: string) => {
+    setMoodState((prev) => ({ ...prev, outfitMainColor: hex }));
+  }, []);
+
+  // 의상 서브 색상 변경 핸들러 (SPEC-OUTFIT-001)
+  const handleOutfitSubColorChange = useCallback((hex: string) => {
+    setMoodState((prev) => ({ ...prev, outfitSubColor: hex }));
+  }, []);
+
   // 사용 가능한 착용 소품 목록 (tier + daily 병합, 중복 제거)
   const availableBodyItems = useMemo(() => {
     const { bodyItemCount } = getUnlockedItemCounts();
@@ -329,6 +350,8 @@ function MoodPageContent() {
         moodCategory: moodState.moodCategory!,
         outfitFile: moodState.outfitFile!,
         expressionFile: moodState.expressionFile!,
+        outfitMainColor: moodState.outfitFile?.endsWith(".svg") ? moodState.outfitMainColor : undefined,
+        outfitSubColor: moodState.outfitFile?.endsWith(".svg") ? moodState.outfitSubColor : undefined,
       });
       setSaveSuccess(true);
       setIsEditMode(true);
@@ -585,6 +608,62 @@ function MoodPageContent() {
                   })}
                 </div>
               </div>
+
+              {/* SVG 의상 선택 (SPEC-OUTFIT-001) */}
+              {svgOutfitAssets.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-medium text-gray-600 mb-2">
+                    SVG 의상 (색상 변경 가능)
+                  </h4>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-3">
+                    {svgOutfitAssets.map((filename) => {
+                      const isSelected = moodState.outfitFile === filename;
+                      return (
+                        <button
+                          key={filename}
+                          type="button"
+                          onClick={() =>
+                            setMoodState((prev) => ({
+                              ...prev,
+                              outfitFile: filename,
+                              outfitCategory: null,
+                              outfitMainColor: prev.outfitMainColor ?? DEFAULT_OUTFIT_MAIN_COLOR,
+                              outfitSubColor: prev.outfitSubColor ?? DEFAULT_OUTFIT_SUB_COLOR,
+                            }))
+                          }
+                          aria-label={filename.replace(/\s*0\.svg$/, "")}
+                          aria-pressed={isSelected}
+                          className={`relative aspect-square rounded-lg border-2 overflow-hidden
+                                     transition-all duration-150 cursor-pointer
+                                     focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1
+                                     ${
+                                       isSelected
+                                         ? "border-purple-500 bg-purple-50 shadow-md scale-105"
+                                         : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                                     }`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`/assets/body-svg/${encodeURIComponent(filename)}`}
+                            alt={filename.replace(/\s*0\.svg$/, "")}
+                            className="w-full h-full object-contain p-1"
+                            loading="lazy"
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* SVG 의상이 선택된 경우 색상 선택기 표시 */}
+                  {moodState.outfitFile?.endsWith(".svg") && (
+                    <OutfitColorPicker
+                      mainColor={moodState.outfitMainColor ?? DEFAULT_OUTFIT_MAIN_COLOR}
+                      subColor={moodState.outfitSubColor ?? DEFAULT_OUTFIT_SUB_COLOR}
+                      onMainColorChange={handleOutfitMainColorChange}
+                      onSubColorChange={handleOutfitSubColorChange}
+                    />
+                  )}
+                </div>
+              )}
 
               {/* 표정 다시 뽑기 버튼 (기분 카드 헤더에서 이동) */}
               {moodState.moodCategory && (

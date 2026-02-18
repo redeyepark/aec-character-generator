@@ -47,6 +47,8 @@ export interface CharacterCombination {
   glasses: string | null; // null = 안경 없음
   handItem: string | null; // 손 아이템 (음료, 꽃, 운동기구 등)
   skinTone?: SkinTone;
+  outfitMainColor?: string;  // 의상 메인 색상 hex (SPEC-OUTFIT-001)
+  outfitSubColor?: string;   // 의상 서브 색상 hex (SPEC-OUTFIT-001)
 }
 
 // 에셋 인덱스 구조 (assetIndex.json 의 타입)
@@ -54,6 +56,7 @@ export interface AssetIndex {
   body: Record<OutfitCategory, string[]>;
   face: string[];
   "face-svg"?: string[];
+  "body-svg"?: string[];  // SVG 의상 파일 목록 (SPEC-OUTFIT-001)
   expression: Record<string, string[]>; // 그룹 번호 → 파일명 배열
   mustache: {
     common: string[];
@@ -208,6 +211,8 @@ export interface MoodEntry {
   outfit_file: string;
   expression_file: string;
   composite_image_url: string | null;
+  outfit_main_color?: string;  // 의상 메인 색상 hex (SPEC-OUTFIT-001)
+  outfit_sub_color?: string;   // 의상 서브 색상 hex (SPEC-OUTFIT-001)
   created_at: string;
   updated_at: string;
 }
@@ -228,6 +233,8 @@ export interface DailyMoodState {
   expressionFile: string | null;
   outfitCategory: OutfitCategory | null;
   outfitFile: string | null;
+  outfitMainColor?: string;  // 의상 메인 색상 hex (SPEC-OUTFIT-001)
+  outfitSubColor?: string;   // 의상 서브 색상 hex (SPEC-OUTFIT-001)
 }
 
 // ============================================
@@ -342,6 +349,41 @@ export interface CycleCompletionBonus {
 
 /** 기본 주기 길이 */
 export const DEFAULT_CYCLE_LENGTH = 14;
+
+// ============================================
+// 이하 SPEC-OUTFIT-001에서 추가된 타입
+// ============================================
+
+// 의상 색상 정보
+export interface OutfitColorInfo {
+  id: string;
+  nameKo: string;
+  hex: string;
+}
+
+// 의상 색상 프리셋 팔레트 (16색)
+export const OUTFIT_COLOR_PRESETS: OutfitColorInfo[] = [
+  { id: "red", nameKo: "빨강", hex: "#E74C3C" },
+  { id: "coral", nameKo: "코랄", hex: "#FF6B6B" },
+  { id: "orange", nameKo: "주황", hex: "#F39C12" },
+  { id: "yellow", nameKo: "노랑", hex: "#F1C40F" },
+  { id: "green", nameKo: "초록", hex: "#27AE60" },
+  { id: "teal", nameKo: "청록", hex: "#1ABC9C" },
+  { id: "blue", nameKo: "파랑", hex: "#3498DB" },
+  { id: "navy", nameKo: "네이비", hex: "#2C3E50" },
+  { id: "purple", nameKo: "보라", hex: "#9B59B6" },
+  { id: "pink", nameKo: "핑크", hex: "#E91E8F" },
+  { id: "white", nameKo: "하양", hex: "#FFFFFF" },
+  { id: "lightgray", nameKo: "밝은 회색", hex: "#BDC3C7" },
+  { id: "gray", nameKo: "회색", hex: "#919191" },
+  { id: "darkgray", nameKo: "진한 회색", hex: "#555555" },
+  { id: "black", nameKo: "검정", hex: "#2C2C2C" },
+  { id: "brown", nameKo: "갈색", hex: "#8B4513" },
+];
+
+// 기본 의상 색상
+export const DEFAULT_OUTFIT_MAIN_COLOR = "#919191";
+export const DEFAULT_OUTFIT_SUB_COLOR = "#C6C6C6";
 
 /** 주기 완주 보너스 설정 */
 export const CYCLE_COMPLETION_BONUS: CycleCompletionBonus = {

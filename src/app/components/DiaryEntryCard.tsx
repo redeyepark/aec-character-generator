@@ -56,6 +56,8 @@ export default function DiaryEntryCard({ entry, character }: DiaryEntryCardProps
       glasses: character.glasses,
       handItem: null,
       skinTone: character.skinTone as SkinTone,
+      outfitMainColor: entry.outfit_main_color,
+      outfitSubColor: entry.outfit_sub_color,
     };
 
     setIsLoading(true);

@@ -115,6 +115,14 @@ export function getFaceSvgAssets(): string[] {
 }
 
 /**
+ * SVG 의상 에셋 목록 반환 (13종)
+ * assetIndex.json의 "body-svg" 키에서 파일명 배열을 가져온다.
+ */
+export function getBodySvgAssets(): string[] {
+  return index["body-svg"] || [];
+}
+
+/**
  * SVG 얼굴 에셋의 전체 경로 반환
  * 반환값: /assets/face-svg/{filename} (public 기준 경로)
  */
@@ -131,6 +139,10 @@ export function getAssetPath(layer: LayerType, filename: string): string {
   // SVG 얼굴 파일은 face-svg 디렉토리에서 제공
   if (layer === "face" && filename.endsWith(".svg")) {
     return `/assets/face-svg/${encodeURIComponent(filename)}`;
+  }
+  // SVG 의상 파일은 body-svg 디렉토리에서 제공 (SPEC-OUTFIT-001)
+  if (layer === "body" && filename.endsWith(".svg")) {
+    return `/assets/body-svg/${encodeURIComponent(filename)}`;
   }
   // bodyItem → body-item 디렉토리, handItem → hand-item 디렉토리
   if (layer === "bodyItem") {
