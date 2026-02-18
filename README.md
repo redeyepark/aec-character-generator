@@ -30,12 +30,13 @@
 - **착용 소품**: 힙색, 망토, 가디건, 헤드폰 등 60종 제공
 - **손 아이템**: 음료, 꽃, 운동기구 등 116종 제공
 - **보상 아이템 선택**: 보유 착용 소품과 손 아이템을 썸네일 그리드에서 확인하고 직접 선택 가능 (랜덤 선택도 지원)
+- **SVG 의상 색상 커스터마이징**: SVG 의상 13종에 대해 메인/서브 색상을 16개 프리셋 팔레트에서 선택 가능
 - **다시 뽑기**: 표정, 의상에 다시 뽑기 버튼 제공
 - **간소화된 저장 흐름**: 기분 선택 후 1-tap 저장, 의상 옵션은 접이식 "세부 조정" 섹션으로 분리
 
 ### 8층 레이어 이미지 합성
 
-Canvas API를 사용하여 8개 레이어를 순서대로 합성합니다. 얼굴 레이어는 SVG 에셋을 로드하여 선택된 피부색으로 치환한 뒤 Canvas에 렌더링합니다.
+Canvas API를 사용하여 8개 레이어를 순서대로 합성합니다. 얼굴 레이어는 SVG 에셋을 로드하여 선택된 피부색으로 치환하고, SVG 의상은 메인/서브/피부 3색을 치환한 뒤 Canvas에 렌더링합니다.
 
 ```
 body(의상) -> bodyItem(착용 소품) -> face(SVG 얼굴 + 피부색) -> expression(표정) -> mustache(수염) -> hair(헤어) -> glasses(안경) -> handItem(손 아이템)
@@ -291,6 +292,7 @@ AEC_today01/
 │   │   ├── DiaryCalendar.tsx      # 캘린더 뷰
 │   │   ├── DiaryEntryCard.tsx     # 다이어리 항목 카드
 │   │   ├── OnboardingSlides.tsx   # 3-slide 온보딩 컴포넌트
+│   │   ├── OutfitColorPicker.tsx  # 의상 메인/서브 색상 선택기 (16색 프리셋)
 │   │   ├── GenerateButton.tsx     # 생성/다운로드 버튼
 │   │   ├── MilestoneProgress.tsx  # 마일스톤 진행도 프로그레스 바
 │   │   ├── MoodSelector.tsx       # 기분 카테고리 선택기
@@ -327,6 +329,7 @@ AEC_today01/
 │       └── assetIndex.json        # 사전 빌드된 에셋 인덱스
 ├── public/assets/                 # 정적 에셋 서빙 디렉토리
 │   ├── body-item/                 # 착용 소품 에셋 60종
+│   ├── body-svg/                  # SVG 의상 에셋 13종 (색상 커스터마이징용)
 │   ├── face-svg/                  # SVG 얼굴 에셋 5종 (피부색 치환용)
 │   └── hand-item/                 # 손 아이템 에셋 116종
 ├── scripts/
@@ -384,6 +387,8 @@ Cloud Firestore에 6개의 컬렉션을 사용하며, Firestore 보안 규칙이
 | outerwear | 아우터 |
 | bowtie | 보타이 |
 | all | 전체 |
+
+SVG 의상 13종은 색상 커스터마이징을 지원하며, 메인 색상과 서브 색상을 각각 16개 프리셋에서 선택할 수 있습니다.
 
 ---
 

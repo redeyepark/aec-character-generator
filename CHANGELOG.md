@@ -7,6 +7,35 @@
 
 ---
 
+## [v1.11.0] - 2026-02-18
+
+### SVG 의상 색상 커스터마이징 (SPEC-OUTFIT-001)
+
+#### 추가
+
+- SVG 의상 에셋 13종 추가 (`public/assets/body-svg/`): T shirt, baseball jacket, european suit, hood T shirt, inner fur jacket, leather jacket, pocket shirt (2종), puffer vest, sheriff (2종), shirt tie, T shirt short
+- `OutfitColorPicker.tsx` 컴포넌트: 메인/서브 의상 색상을 16개 프리셋 팔레트에서 선택하는 UI (WCAG 2.1 AA 접근성 준수)
+- `svgProcessor.ts`에 `applyOutfitColors()`, `loadColoredOutfitSvgAsImage()` 함수 추가: SVG 3색 동시 교체 (메인 #919191, 서브 #C6C6C6, 피부 #FFFFFF)
+- `assetManager.ts`에 `getBodySvgAssets()` 함수 및 body-svg 경로 라우팅 추가
+- `OutfitColorInfo` 타입, `OUTFIT_COLOR_PRESETS` 16색 팔레트 상수 추가
+- `assetIndex.json`에 `body-svg` 키 추가 (13종 SVG 파일 목록)
+
+#### 변경
+
+- `imageCompositor.ts`: body 레이어에 SVG 의상 렌더링 분기 추가 (파일 확장자 `.svg` 기반)
+- `mood/page.tsx`: SVG 의상 선택 그리드 및 색상 피커 통합, 의상 색상 상태 관리
+- `useMoodEntries.ts`: 의상 색상 저장/로드 로직 추가 (`outfitMainColor`, `outfitSubColor`)
+- `DiaryEntryCard.tsx`: 다이어리 카드에서 저장된 의상 색상 렌더링 지원
+- `CharacterCombination`, `DailyMoodState`, `MoodEntry`, `AssetIndex` 타입 확장
+- `FirestoreMoodEntry`에 `outfitMainColor`, `outfitSubColor` optional 필드 추가
+
+#### 호환성
+
+- 기존 PNG 의상 시스템과 완전 호환 (파일 확장자 기반 분기)
+- 기존 Firestore 데이터 하위 호환 (optional 필드로 추가)
+
+---
+
 ## [v1.10.0] - 2026-02-18
 
 ### 보상 아이템 인벤토리 선택 UI

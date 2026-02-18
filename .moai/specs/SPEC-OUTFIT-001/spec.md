@@ -3,7 +3,7 @@
 ---
 id: SPEC-OUTFIT-001
 version: 1.0.0
-status: Draft
+status: Completed
 created: 2026-02-18
 updated: 2026-02-18
 author: MoAI
@@ -19,7 +19,7 @@ assigned: expert-frontend
 | SPEC ID | SPEC-OUTFIT-001 |
 | 제목 | SVG Outfit Color Customization |
 | 생성일 | 2026-02-18 |
-| 상태 | Draft |
+| 상태 | Completed |
 | 우선순위 | Medium |
 | 라이프사이클 | spec-first |
 | 담당 | expert-frontend |
@@ -32,6 +32,7 @@ assigned: expert-frontend
 | 날짜 | 버전 | 변경 내용 |
 |------|------|----------|
 | 2026-02-18 | 1.0.0 | 초기 SPEC 문서 작성 |
+| 2026-02-18 | 1.1.0 | 구현 완료 - 13종 SVG 의상 색상 커스터마이징, 16색 프리셋, Firestore 통합 |
 
 ---
 
