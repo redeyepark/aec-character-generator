@@ -7,6 +7,26 @@
 
 ---
 
+## [v1.10.0] - 2026-02-18
+
+### 보상 아이템 인벤토리 선택 UI
+
+#### 추가
+
+- `RewardInventoryPanel.tsx` 컴포넌트: 보유한 보상 아이템(착용 소품/손 아이템)을 썸네일 그리드로 표시하는 시각적 인벤토리 패널
+- 아이템별 "랜덤" 버튼: 착용 소품/손 아이템 각각 랜덤 선택 기능
+- 아이템별 "해제" 버튼: 착용 소품/손 아이템 각각 해제 기능
+- 접이식(details/summary) 패널 구조로 화면 공간 절약
+
+#### 변경
+
+- `mood/page.tsx`: 기존 `handleRerollBodyItem`, `handleRerollHandItem` 콜백을 `useMemo` 훅(`availableBodyItems`, `availableHandItems`)으로 교체
+- "세부 조정" 섹션에서 착용 소품/손 아이템 "다시 뽑기" 버튼 제거
+- "세부 조정" 섹션 하단에 `RewardInventoryPanel` 컴포넌트 배치
+- 아이템 선택 방식을 랜덤 전용에서 시각적 인벤토리 직접 선택으로 개선
+
+---
+
 ## [v1.9.0] - 2026-02-18
 
 ### 일일 아이템 보상 이벤트 (SPEC-EVENT-002)

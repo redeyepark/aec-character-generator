@@ -4,7 +4,7 @@
 id: SPEC-FORTUNE-001
 title: Fortune-Based Daily Recommendation System - Implementation Plan
 created: 2026-02-17
-status: Planned
+status: completed
 tags: [fortune, saju, implementation-plan]
 ---
 

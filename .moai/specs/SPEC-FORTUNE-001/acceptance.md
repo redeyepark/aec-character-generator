@@ -4,7 +4,7 @@
 id: SPEC-FORTUNE-001
 title: Fortune-Based Daily Recommendation System - Acceptance Criteria
 created: 2026-02-17
-status: Planned
+status: completed
 tags: [fortune, saju, acceptance-criteria, gherkin]
 ---
 

@@ -4,7 +4,7 @@
 id: SPEC-FORTUNE-001
 title: Fortune-Based Daily Recommendation System
 created: 2026-02-17
-status: Planned
+status: completed
 priority: High
 lifecycle: spec-first
 related-specs: [SPEC-UPDATE-001, SPEC-UX-001]

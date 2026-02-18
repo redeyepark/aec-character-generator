@@ -27,9 +27,10 @@
 - **7가지 기분 카테고리**: 행복/쾌활, 자신감/쿨, 차분/편안, 놀람/흥분, 사려깊음/진지, 유쾌/재미, 결연/강인
 - **6가지 의상 카테고리**: 캐주얼, 포멀, 스포티, 아우터, 보타이, 전체
 - **자동 랜덤 생성**: 카테고리 선택 시 해당 카테고리 내에서 자동으로 랜덤 선택
-- **착용 소품**: 힙색, 망토, 가디건, 헤드폰 등 60종 랜덤 제공
-- **손 아이템**: 음료, 꽃, 운동기구 등 116종 랜덤 제공
-- **다시 뽑기**: 표정, 의상, 착용 소품, 손 아이템 각각에 다시 뽑기 버튼 제공
+- **착용 소품**: 힙색, 망토, 가디건, 헤드폰 등 60종 제공
+- **손 아이템**: 음료, 꽃, 운동기구 등 116종 제공
+- **보상 아이템 선택**: 보유 착용 소품과 손 아이템을 썸네일 그리드에서 확인하고 직접 선택 가능 (랜덤 선택도 지원)
+- **다시 뽑기**: 표정, 의상에 다시 뽑기 버튼 제공
 - **간소화된 저장 흐름**: 기분 선택 후 1-tap 저장, 의상 옵션은 접이식 "세부 조정" 섹션으로 분리
 
 ### 8층 레이어 이미지 합성
@@ -286,6 +287,7 @@ AEC_today01/
 │   │   ├── BirthInfoForm.tsx      # 생년월일 입력 폼 (음력/양력 선택 지원)
 │   │   ├── CharacterCanvas.tsx    # Canvas 기반 캐릭터 미리보기
 │   │   ├── ClientLayout.tsx       # 클라이언트 레이아웃 래퍼
+│   │   ├── DailyRewardCard.tsx    # 일일 보상 주기 진행도 카드
 │   │   ├── DiaryCalendar.tsx      # 캘린더 뷰
 │   │   ├── DiaryEntryCard.tsx     # 다이어리 항목 카드
 │   │   ├── OnboardingSlides.tsx   # 3-slide 온보딩 컴포넌트
@@ -295,6 +297,7 @@ AEC_today01/
 │   │   ├── NavBar.tsx             # 내비게이션 바
 │   │   ├── OutfitSelector.tsx     # 의상 카테고리 선택기
 │   │   ├── RewardBadge.tsx        # 보상 해금 배지
+│   │   ├── RewardInventoryPanel.tsx # 보상 아이템 인벤토리 선택 패널
 │   │   ├── SkinTonePicker.tsx     # 피부색 프리셋 선택기 (8종)
 │   │   └── WizardStep.tsx         # 위자드 단계 래퍼
 │   ├── contexts/
@@ -304,12 +307,14 @@ AEC_today01/
 │   │   ├── useAuth.ts             # 인증 상태 관리 훅
 │   │   ├── useBirthInfo.ts        # 생년월일 정보 관리 훅
 │   │   ├── useCharacter.ts        # 캐릭터 CRUD 훅
+│   │   ├── useDailyReward.ts      # 일일 보상 이벤트 관리 훅
 │   │   ├── useFortune.ts          # 운세 계산 및 조회 훅
 │   │   ├── useMoodEntries.ts      # 무드 항목 CRUD 훅
 │   │   └── useRewards.ts          # 보상 해금 관리 훅
 │   ├── lib/
 │   │   ├── assetManager.ts        # 에셋 로딩/인덱싱/분류
 │   │   ├── attendance-utils.ts     # 출석 순수 비즈니스 로직 유틸리티
+│   │   ├── daily-reward-utils.ts   # 일일 보상 순수 비즈니스 로직 유틸리티
 │   │   ├── __tests__/              # 단위 테스트
 │   │   ├── firebase.ts             # Firebase 앱 초기화 및 서비스 내보내기
 │   │   ├── firestore.types.ts     # Firestore 컬렉션 타입 정의
@@ -342,7 +347,7 @@ AEC_today01/
 
 ## 데이터베이스 스키마
 
-Cloud Firestore에 5개의 컬렉션을 사용하며, Firestore 보안 규칙이 적용되어 있습니다.
+Cloud Firestore에 6개의 컬렉션을 사용하며, Firestore 보안 규칙이 적용되어 있습니다.
 
 | 컬렉션 | 용도 | 제약조건 |
 |--------|------|----------|
@@ -351,6 +356,7 @@ Cloud Firestore에 5개의 컬렉션을 사용하며, Firestore 보안 규칙이
 | `mood_entries` | 일일 무드 기록 (mood_category, outfit_file, expression_file) | 사용자당 하루 1개 |
 | `attendance` | 월별 출석 기록 (attendedDates, currentStreak, maxStreak, totalDays) | 사용자당 월 1개 |
 | `rewards` | 보상 해금 기록 (unlockedRewards 배열) | 사용자당 1개 |
+| `event_rewards` | 일일 보상 이벤트 (cycleLength, dailyClaims, allClaimedItems, cycleCompleted) | 사용자당 1개 |
 
 ---
 
