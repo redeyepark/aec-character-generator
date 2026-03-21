@@ -11,6 +11,7 @@ import { useAuth } from "@/app/hooks/useAuth";
 // 네비게이션 링크 목록
 const NAV_LINKS = [
   { href: "/mood/", label: "오늘의 기분" },
+  { href: "/inventory/", label: "옷장" },
   { href: "/diary/", label: "다이어리" },
   { href: "/settings/", label: "설정" },
 ] as const;
