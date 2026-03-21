@@ -1,7 +1,7 @@
 ---
 id: SPEC-INVENTORY-001
 version: "1.0.0"
-status: Draft
+status: Completed
 created: 2026-02-18
 updated: 2026-02-18
 author: MoAI
@@ -13,6 +13,7 @@ priority: Medium
 | 버전 | 날짜 | 변경 내용 |
 |------|------|-----------|
 | 1.0.0 | 2026-02-18 | 초안 작성 |
+| 1.1.0 | 2026-03-21 | 구현 완료, 상태 Completed로 변경 |
 
 ---
 
