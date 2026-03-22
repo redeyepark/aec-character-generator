@@ -50,7 +50,7 @@ const OUTFIT_SUB_FILTERS = [
 ];
 
 export default function InventoryPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { fetchRewards, getUnlockedItemCounts, loading: rewardsLoading } = useRewards();
   const { fetchEventReward, getDailyRewardItems, loading: dailyLoading } = useDailyReward();
 
@@ -65,10 +65,10 @@ export default function InventoryPage() {
 
   // 인증 체크: 미인증 시 로그인 페이지로 리다이렉트
   useEffect(() => {
-    if (user === null) {
+    if (!authLoading && user === null) {
       window.location.href = "/login/";
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   // 마운트 시 데이터 로드
   useEffect(() => {
@@ -246,7 +246,7 @@ export default function InventoryPage() {
   const isLoading = !dataLoaded || rewardsLoading || dailyLoading;
 
   // 미인증 상태에서는 렌더링하지 않음
-  if (!user) return null;
+  if (authLoading || !user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
