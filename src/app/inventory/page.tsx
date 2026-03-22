@@ -7,6 +7,7 @@
  */
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "@/app/hooks/useAuth";
+import AuthGuard from "@/app/components/AuthGuard";
 import { useRewards } from "@/app/hooks/useRewards";
 import { useDailyReward } from "@/app/hooks/useDailyReward";
 import NavBar from "@/app/components/NavBar";
@@ -49,8 +50,8 @@ const OUTFIT_SUB_FILTERS = [
   { id: "svg", label: "SVG" },
 ];
 
-export default function InventoryPage() {
-  const { user, loading: authLoading } = useAuth();
+function InventoryPageContent() {
+  const { user } = useAuth();
   const { fetchRewards, getUnlockedItemCounts, loading: rewardsLoading } = useRewards();
   const { fetchEventReward, getDailyRewardItems, loading: dailyLoading } = useDailyReward();
 
@@ -62,13 +63,6 @@ export default function InventoryPage() {
   const [sortBy, setSortBy] = useState<"name" | "source">("name");
   // 데이터 로딩 완료 여부
   const [dataLoaded, setDataLoaded] = useState(false);
-
-  // 인증 체크: 미인증 시 로그인 페이지로 리다이렉트
-  useEffect(() => {
-    if (!authLoading && user === null) {
-      window.location.href = "/login/";
-    }
-  }, [user, authLoading]);
 
   // 마운트 시 데이터 로드
   useEffect(() => {
@@ -245,8 +239,7 @@ export default function InventoryPage() {
 
   const isLoading = !dataLoaded || rewardsLoading || dailyLoading;
 
-  // 미인증 상태에서는 렌더링하지 않음
-  if (authLoading || !user) return null;
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -303,5 +296,14 @@ export default function InventoryPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+// AuthGuard로 래핑
+export default function InventoryPage() {
+  return (
+    <AuthGuard>
+      <InventoryPageContent />
+    </AuthGuard>
   );
 }
